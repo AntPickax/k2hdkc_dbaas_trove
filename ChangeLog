@@ -1,3 +1,11 @@
+k2hdkc-dbaas (1.0.2) unstable; urgency=low
+
+  * Corresponds to the stable/2024.1 branch of OpenStack Trove
+  * The K2HDKC cluster will be launched using a Docker image
+  * K2HDKC DBaaS Trove has been separated from the K2HDKC DBaaS repository
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Mon, 16 Dec 2024 15:58:51 +0900
+
 k2hdkc-dbaas (1.0.1) unstable; urgency=low
 
   * Updated README.md for k2hdkc_dbaas_override_conf - #102
