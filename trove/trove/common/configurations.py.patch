@@ -1,0 +1,46 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/common/configurations.py b/trove/common/configurations.py
+index f9fbccfd..622cf6e8 100644
+--- a/trove/common/configurations.py
++++ b/trove/common/configurations.py
+@@ -95,3 +95,13 @@ class DB2ConfParser(object):
+ 
+     def parse(self):
+         return self.CODEC.deserialize(self.config).items()
++
++class K2hdkcConfParser(object):
++
++    CODEC = stream_codecs.KeyValueCodec(delimiter='=', comment_marker='#', line_terminator='\n')
++
++    def __init__(self, config):
++        self.config = config
++
++    def parse(self):
++        return self.CODEC.deserialize(self.config).items()
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

@@ -1,0 +1,49 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/integration/scripts/trovestack b/integration/scripts/trovestack
+index 50ec9792..881ddcb3 100755
+--- a/integration/scripts/trovestack
++++ b/integration/scripts/trovestack
+@@ -780,6 +780,16 @@ function cmd_build_image() {
+     fi
+     sudo -H $HTTP_PROXY pip3 install diskimage-builder
+ 
++    # [NOTE] Ignore for checking pgp
++    # When building with Rocky, I use gutsy to build jammy, but PGP is outdated and an error occurs.
++    # Therefore, I bypass the PGP check.
++    #
++    if grep '^ID=' /etc/os-release | grep -q -i rocky; then
++        if [ -f /usr/local/lib/python3.9/site-packages/diskimage_builder/elements/debootstrap/root.d/08-debootstrap ]; then
++            sudo sed -i -e 's#--variant=minbase[[:space:]]*\\#--variant=minbase --no-check-gpg \\#g' /usr/local/lib/python3.9/site-packages/diskimage_builder/elements/debootstrap/root.d/08-debootstrap
++        fi
++    fi
++
+     build_guest_image ${image_guest_os} ${image_guest_release} ${dev_mode} ${guest_username} ${output}
+ }
+ 
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

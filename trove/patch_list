@@ -1,0 +1,81 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2024 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Mon May 20 2024
+# REVISION:
+#
+
+#==============================================================
+# [NOTE]
+# This is a list of source code that requires a patch file and
+# newly added files.
+# After applying the patch, you can check the changes and added
+# files using commands such as "git status -u -s".
+# Files that are not included in this list are files that have
+# been updated directly by the startup script. In other words,
+# those files should not be included in this list.
+#==============================================================
+
+[PATCH]
+backup/install.sh
+backup/main.py
+devstack/plugin.sh
+devstack/settings
+integration/scripts/trovestack
+trove/cmd/guest.py
+trove/common/cfg.py
+trove/common/configurations.py
+trove/common/template.py
+trove/db/sqlalchemy/migrate_repo/migrate.cfg
+trove/db/sqlalchemy/migrate_repo/versions/020_configurations.py
+trove/db/sqlalchemy/session.py
+trove/extensions/common/models.py
+trove/guestagent/datastore/mysql_common/service.py
+trove/guestagent/datastore/postgres/service.py
+trove/guestagent/dbaas.py
+trove/guestagent/utils/docker.py
+
+[COPY]
+backup/drivers/k2hdkcbackup.py
+integration/scripts/files/elements/ubuntu-guest/install.d/10-restart-network-interface
+trove/common/db/k2hdkc/__init__.py
+trove/common/db/k2hdkc/models.py
+trove/common/strategies/cluster/experimental/k2hdkc/__init__.py
+trove/common/strategies/cluster/experimental/k2hdkc/api.py
+trove/common/strategies/cluster/experimental/k2hdkc/guestagent.py
+trove/common/strategies/cluster/experimental/k2hdkc/taskmanager.py
+trove/extensions/k2hdkc/__init__.py
+trove/extensions/k2hdkc/models.py
+trove/extensions/k2hdkc/service.py
+trove/extensions/k2hdkc/views.py
+trove/extensions/routes/k2hdkc.py
+trove/guestagent/datastore/experimental/k2hdkc/__init__.py
+trove/guestagent/datastore/experimental/k2hdkc/manager.py
+trove/guestagent/datastore/experimental/k2hdkc/service.py
+trove/guestagent/strategies/replication/k2hdkc_gtid.py
+trove/guestagent/utils/k2hdkc.py
+trove/templates/k2hdkc/config.template
+trove/templates/k2hdkc/replica.config.template
+trove/templates/k2hdkc/replica_source.config.template
+trove/templates/k2hdkc/validation-rules.json
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

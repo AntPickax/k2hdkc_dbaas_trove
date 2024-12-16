@@ -1,0 +1,162 @@
+# syntax=docker/dockerfile:1
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2024 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Wed May 14 2024
+# REVISION:
+#
+
+#
+# Base Image
+#
+# Variables
+#	SETUP_BASE_REGISTRY		Docker Register server and port. This value can be left empty and will use DockerHub as default.
+#							This value must be terminated by "/" charactor.
+#	SETUP_BASE_REPOSITORY	Docker Repository name.
+#	SETUP_K2HDKC_VERSTR		K2HDKC base image version(with os type).
+#
+# Examples:
+#	FROM "antpickax/k2hdkc:latest-ubuntu"
+#	FROM "localhost/antpickax/k2hdkc:1.0.14-ubuntu"
+#
+
+FROM %%SETUP_BASE_REGISTRY%%%%SETUP_BASE_REPOSITORY%%/k2hdkc:%%SETUP_K2HDKC_VERSTR%%
+
+USER root
+
+#
+# Add User(name, uid, gid)
+#
+ARG ADD_UNAME=database
+ARG ADD_UID=1001
+ARG ADD_GID=1001
+
+#
+# Environments
+#
+# Variables
+#	SETUP_ENV				Setting environment variables(other than PROXY)
+#
+# Example:
+#	ENV DEBIAN_FRONTEND     "noninteractive"	(only ubuntu)
+#
+%%SETUP_ENV%%
+
+#
+# Proxy Environments
+#
+# Variables
+#	SETUP_PROXY_ENV			HTTP_PROXY, HTTPS_PROXY, NO_PROXY, Package manager configuarion file(only ubuntu), etc
+#
+# Example:
+#	ENV http_proxy          "<PROXY HOST URL>"
+#	ENV https_proxy         "<PROXY HOST URL>"
+#	ENV HTTP_PROXY          "<PROXY HOST URL>"
+#	ENV HTTPS_PROXY         "<PROXY HOST URL>"
+#	ENV no_proxy            "<FQDN,...>"
+#	ENV NO_PROXY            "<FQDN,...>"
+#
+%%SETUP_PROXY_ENV%%
+
+#
+# Preprocess before installing packages
+#
+# Example:
+#	COPY ./00-aptproxy.conf /etc/apt/apt.conf.d/00-aptproxy.conf"	(only ubuntu)
+#
+%%PRE_PROCESS_BEFORE_INSTALL%%
+
+#
+# Install common packages and packages related to K2HDKC
+#
+# Variables
+#	PRE_PKG_UPDATE				Pre-process before updating package and information
+#	PKG_UPDATE					Update package and information
+#	PRE_COMMON_PKG_INSTALL		Pre-process before installing common package
+#	COMMON_PKG_INSTALL			Installing common package
+#	POST_COMMON_PKG_INSTALL		Post-process after installing common package
+#	PRE_PKG_INSTALL				Pre-process before installing related packages for K2HDKC
+#	PKG_INSTALL					Installing related packages for K2HDKC
+#	POST_PKG_INSTALL			Post-process after installing related packages for K2HDKC
+#	PRE_SETUP_USER				Pre-process before adding user and group for k2hdkc processes
+#	SETUP_USER					Add user and group for k2hdkc processes
+#	POST_SETUP_USER				Post-process after ading user and group for k2hdkc processes
+#
+# Examples:
+#	PRE_PKG_UPDATE				';'
+#	PKG_UPDATE					'apt-get update -y -qq --no-install-recommends --allow-unauthenticated'
+#	PRE_COMMON_PKG_INSTALL		':'
+#	COMMON_PKG_INSTALL			'apt-get install -y -qq --no-install-recommends --allow-unauthenticated curl sudo'
+#	POST_COMMON_PKG_INSTALL		':'
+#	PRE_PKG_INSTALL				'curl -s https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh | bash'
+#	PKG_INSTALL					'apt-get install -y -qq --no-install-recommends --allow-unauthenticated k2hr3-get-resource k2hdkc-dbaas-override-conf'
+#	POST_PKG_INSTALL			'echo "k2hr3-get-resource-helper.conf:USE_DAEMON = false" >> /etc/antpickax/override.conf && sed -i -e "s#SUBPROCESS_USER[[:space:]]*=[[:space:]]*k2hdkc#SUBPROCESS_USER = database#g" /etc/antpickax/override.conf'
+#	PRE_SETUP_USER				':'
+#	SETUP_USER					'groupadd -g "${ADD_GID}" -o "${ADD_UNAME}" && useradd --no-log-init -r -M --shell /usr/sbin/nologin -d /nonexistent -u "${ADD_UID}" -g "${ADD_GID}" "${ADD_UNAME}" 2>/dv/null'
+#	POST_SETUP_USER				'echo "database ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/50-database && echo "Defaults:database env_keep=\"http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY\"" >> /etc/sudoers.d/50-database'
+#
+RUN set -x && \
+	%%PRE_PKG_UPDATE%% && \
+	%%PKG_UPDATE%% && \
+	%%PRE_COMMON_PKG_INSTALL%% && \
+	%%COMMON_PKG_INSTALL%% && \
+	%%POST_COMMON_PKG_INSTALL%% && \
+	%%PRE_PKG_INSTALL%% && \
+	%%PKG_INSTALL%% && \
+	%%POST_PKG_INSTALL%% && \
+	%%PRE_SETUP_USER%% && \
+	%%SETUP_USER%% && \
+	%%POST_SETUP_USER%%
+
+#
+# Install files from local host
+#
+COPY k2hdkctrove.sh /usr/libexec/k2hdkctrove.sh
+RUN	chmod +x /usr/libexec/k2hdkctrove.sh
+
+#
+# Setup directories
+#
+# [NOTE]
+# Some directories are specified as mount points when the GuestOS
+# instance is launched.
+#
+RUN	mkdir -p /var/log/antpickax && chmod 0777 /var/log/antpickax && \
+	mkdir -p /var/lib/antpickax/k2hdkc && chmod 0777 /var/lib/antpickax/k2hdkc && \
+	mkdir -p /var/lib/cloud/data && chmod 0777 /var/lib/cloud/data
+
+#
+# User must be database(1001:1001)
+#
+USER database
+
+#
+# Publish the following ports except using docker networking with host mode
+#
+EXPOSE 8020 8021 8031
+
+#
+# Set entrypoint (but the command is specified when run container)
+#
+ENTRYPOINT ["/usr/libexec/k2hdkctrove.sh"]
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

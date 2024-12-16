@@ -1,0 +1,49 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/cmd/guest.py b/trove/cmd/guest.py
+index 556cab83..67a70beb 100644
+--- a/trove/cmd/guest.py
++++ b/trove/cmd/guest.py
+@@ -77,7 +77,15 @@ def main():
+     # Create user and group for running docker container.
+     LOG.info('Creating user and group for database service')
+     uid = cfg.get_configuration_property('database_service_uid')
+-    operating_system.create_user('database', uid)
++
++    #operating_system.create_user('database', uid)
++    #
++    try:
++        import shlex
++        import subprocess
++        subprocess.run(["id", "{}".format(shlex.quote(uid))])
++    except subprocess.CalledProcessError:
++        operating_system.create_user('database', uid)
+ 
+     # Mount device if needed.
+     # When doing rebuild, the device should be already formatted but not
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

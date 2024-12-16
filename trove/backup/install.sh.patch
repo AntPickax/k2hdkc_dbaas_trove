@@ -1,0 +1,86 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/backup/install.sh b/backup/install.sh
+index 5756de39..272209b4 100755
+--- a/backup/install.sh
++++ b/backup/install.sh
+@@ -3,8 +3,7 @@ set -e
+ 
+ export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ APTOPTS="-y -qq --no-install-recommends --allow-unauthenticated"
+-OS_RELEASE_CODENAME=$(lsb_release -sc)
+-
++OS_RELEASE_CODENAME=$(lsb_release -sc 2>/dev/null)
+ 
+ #
+ # usage()
+@@ -41,6 +40,9 @@ if [ $# -eq 1 ]; then
+ 	elif [ "$1" = "postgresql" ]; then
+ 		OPT_DATASTORE="postgresql"
+ 		OPT_DATASTORE_VERSION="12"
++	elif [ "$1" = "k2hdkc" ]; then
++		OPT_DATASTORE="k2hdkc"
++		OPT_DATASTORE_VERSION="1.0.14"
+ 	else
+ 		usage
+ 	fi
+@@ -88,6 +90,9 @@ if [ "${OPT_DATASTORE}" = "mysql" ]; then
+ 		echo "datastore ${OPT_DATASTORE} with ${OPT_DATASTORE_VERSION} not supported"
+ 		exit 1
+ 	fi
++	apt-get clean
++	rm -rf /var/lib/apt/lists/*
++
+ elif [ "${OPT_DATASTORE}" = "mariadb" ]; then
+ 	# See the url below about the supported version.
+ 	# https://mariadb.com/docs/xpand/ref/repo/cli/mariadb_repo_setup/mariadb-server-version/
+@@ -109,6 +114,9 @@ elif [ "${OPT_DATASTORE}" = "mariadb" ]; then
+ 		echo "curl command failed"
+ 		exit 1
+ 	fi
++	apt-get clean
++	rm -rf /var/lib/apt/lists/*
++
+ elif [ "${OPT_DATASTORE}" = "postgresql" ]; then
+ 	# See here for the supported version
+ 	# https://www.postgresql.org/support/versioning/
+@@ -122,7 +130,10 @@ elif [ "${OPT_DATASTORE}" = "postgresql" ]; then
+ 		exit 1
+ 	fi
+ 	apt-get install ${APTOPTS} postgresql-client-${DATASTORE_CLIENT_PKG_VERSION}
+-fi
+ 
+-apt-get clean
+-rm -rf /var/lib/apt/lists/*
++	apt-get clean
++	rm -rf /var/lib/apt/lists/*
++
++elif [ "${OPT_DATASTORE}" = "k2hdkc" ]; then
++    :
++fi
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

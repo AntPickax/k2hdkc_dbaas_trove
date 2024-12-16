@@ -1,0 +1,51 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/guestagent/dbaas.py b/trove/guestagent/dbaas.py
+index 44de755c..2c914972 100644
+--- a/trove/guestagent/dbaas.py
++++ b/trove/guestagent/dbaas.py
+@@ -33,6 +33,7 @@ from trove.common.i18n import _
+ from trove.common import utils
+ 
+ LOG = logging.getLogger(__name__)
++
+ defaults = {
+     'mysql':
+         'trove.guestagent.datastore.mysql.manager.Manager',
+@@ -58,7 +59,10 @@ defaults = {
+         'trove.guestagent.datastore.experimental.vertica.manager.Manager',
+     'db2':
+         'trove.guestagent.datastore.experimental.db2.manager.Manager',
++    'k2hdkc':
++        'trove.guestagent.datastore.experimental.k2hdkc.manager.Manager',
+ }
++
+ CONF = cfg.CONF
+ 
+ 
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

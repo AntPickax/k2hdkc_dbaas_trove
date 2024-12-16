@@ -1,0 +1,54 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/devstack/settings b/devstack/settings
+index b10a673a..0615261d 100644
+--- a/devstack/settings
++++ b/devstack/settings
+@@ -90,13 +90,21 @@ if [ "$TROVE_ENABLE_LOCAL_REGISTRY" == "True" ] ; then
+     TROVE_DATABASE_IMAGE_MYSQL=${TROVE_DATABASE_IMAGE_MYSQL:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/mysql"}
+     TROVE_DATABASE_IMAGE_MARIADB=${TROVE_DATABASE_IMAGE_MARIAD:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/mariadb"}
+     TROVE_DATABASE_IMAGE_POSTGRES=${TROVE_DATABASE_IMAGE_POSTGRES:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/postgres"}
++    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/k2hdkc-trove"}
+     TROVE_DATABASE_BACKUP_IMAGE_MYSQL=${TROVE_DATABASE_BACKUP_IMAGE_MYSQL:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/db-backup-mysql"}
+     TROVE_DATABASE_BACKUP_IMAGE_MARIADB=${TROVE_DATABASE_BACKUP_IMAGE_MARIADB:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/db-backup-mariadb"}
+     TROVE_DATABASE_BACKUP_IMAGE_POSTGRES=${TROVE_DATABASE_BACKUP_IMAGE_POSTGRES:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/db-backup-postgresql"}
++    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"$TROVE_HOST_GATEWAY:4000/trove-datastores/k2hdkc-trove-backup"}
++    TROVE_INSECURE_DOCKER_REGISTRIES=${TROVE_INSECURE_DOCKER_REGISTRIES:-""}
+ else
+     TROVE_DATABASE_IMAGE_MYSQL=${TROVE_DATABASE_IMAGE_MYSQL:-"docker.io/library/mysql"}
+     TROVE_DATABASE_IMAGE_MARIADB=${TROVE_DATABASE_IMAGE_MARIAD:-"docker.io/library/mariadb"}
+     TROVE_DATABASE_IMAGE_POSTGRES=${TROVE_DATABASE_IMAGE_POSTGRES:-"docker.io/library/postgres"}
+     TROVE_DATABASE_BACKUP_IMAGE_MYSQL=${TROVE_DATABASE_BACKUP_IMAGE_MYSQL:-""}
+     TROVE_DATABASE_BACKUP_IMAGE_POSTGRES=${TROVE_DATABASE_BACKUP_IMAGE_POSTGRES:-""}
++    #K2HDKC-START
++    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove:1.0.1-ubuntu"}
++    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove-backup:1.0.1-ubuntu"}
++    TROVE_INSECURE_DOCKER_REGISTRIES=${TROVE_INSECURE_DOCKER_REGISTRIES:-""}
++    #K2HDKC-END
+ fi
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

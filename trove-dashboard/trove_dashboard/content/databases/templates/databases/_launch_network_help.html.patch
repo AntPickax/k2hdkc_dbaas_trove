@@ -1,0 +1,45 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove_dashboard/content/databases/templates/databases/_launch_network_help.html b/trove_dashboard/content/databases/templates/databases/_launch_network_help.html
+index 18a9aac..82714e9 100644
+--- a/trove_dashboard/content/databases/templates/databases/_launch_network_help.html
++++ b/trove_dashboard/content/databases/templates/databases/_launch_network_help.html
+@@ -1,9 +1,4 @@
+-{% load i18n %}
++{% load i18n horizon %}
++
++<p>{% blocktrans %}Choose network from Available networks to Selected networks by push button or drag and drop, you may change NIC order by drag and drop as well. {% endblocktrans %}</p>
+ 
+-<p>
+-  {% blocktrans trimmed %}
+-  Move networks from 'Available Networks' to 'Selected Networks' by
+-  clicking the button, or dragging and dropping. You can change the
+-  NIC order by dragging and dropping as well.
+-  {% endblocktrans %}
+-</p>
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

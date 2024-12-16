@@ -1,0 +1,48 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/db/sqlalchemy/session.py b/trove/db/sqlalchemy/session.py
+index 630c3d46..311c2b4c 100644
+--- a/trove/db/sqlalchemy/session.py
++++ b/trove/db/sqlalchemy/session.py
+@@ -43,6 +43,7 @@ def configure_db(options, models_mapper=None):
+         from trove.dns import models as dns_models
+         from trove.extensions.mysql import models as mysql_models
+         from trove.extensions.security_group import models as secgrp_models
++        from trove.extensions.k2hdkc import models as k2hdkc_models
+         from trove.guestagent import models as agent_models
+         from trove.instance import models as base_models
+         from trove.module import models as module_models
+@@ -53,6 +54,7 @@ def configure_db(options, models_mapper=None):
+             datastores_models,
+             dns_models,
+             mysql_models,
++            k2hdkc_models,
+             agent_models,
+             quota_models,
+             backup_models,
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

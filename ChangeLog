@@ -1,0 +1,31 @@
+k2hdkc-dbaas (1.0.1) unstable; urgency=low
+
+  * Updated README.md for k2hdkc_dbaas_override_conf - #102
+  * Updated k2hdkc cluster construction to new logic(systemd) - #101
+  * Corresponds to CentOS-8.3.2011(2) - #100
+  * Corresponds to CentOS-8.3.2011 - #99
+  * Uses binary packages instead of the source code - #97
+  * Adds iptable rules - #96
+  * Creates the devstack dir explicitly for the devstack official document
+    consistency - #95
+  * Changes the polkit dir owner - #94
+  * Fixed Header/Footer inconsistency enhancement - #92
+  * Changes the usage_timeout two times long - #91
+  * Updated the k2hr3 creation script to k2hr3_utils compatiblity etc enhancement - #90
+  * Adds retries, gets IP from NIC and adds "-f" option VirtualBox and Azure - #88
+  * Get IP from NIC in custom_internal_openstack-image-create.sh - #87
+  * Gets IP from NIC - #86
+  * Fixes internal test for azure - #85
+  * Probes nested virtualization on additional environments - #84
+  * Makes devstack use the different ip rage with default ip range of
+    10.0.0.0/24 - #83
+  * Uses systemd-resolved to resolve the client names - #82
+  * Adds BUILD_GUEST_IMAGE variable to skip building the image - #81
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Fri, 05 Feb 2021 16:25:57 +0900
+
+k2hdkc-dbaas (1.0.0) unstable; urgency=low
+
+  * First version of open sorce on Github
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Fri, 09 Oct 2020 12:17:49 +0900

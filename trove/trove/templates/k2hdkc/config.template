@@ -1,0 +1,9 @@
+[k2hdkc]
+cluster-name=None
+extdata-url=None
+chmpx-server-port=8020
+chmpx-server-ctlport=8021
+chmpx-slave-ctlport=8031
+http_proxy=None
+https_proxy=None
+no_proxy=None

@@ -1,0 +1,340 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove_dashboard/api/trove.py b/trove_dashboard/api/trove.py
+index d3a0561..9c73a34 100644
+--- a/trove_dashboard/api/trove.py
++++ b/trove_dashboard/api/trove.py
+@@ -23,6 +23,18 @@ from openstack_dashboard.api import base
+ from oslo_log import log as logging
+ from troveclient.v1 import client
+ 
++import json
++import re
++from pathlib import Path
++
++import k2hr3client
++from k2hr3client.http import K2hr3Http
++from k2hr3client.policy import K2hr3Policy
++from k2hr3client.resource import K2hr3Resource
++from k2hr3client.role import K2hr3Role
++from k2hr3client.token import K2hr3Token, K2hr3RoleToken, K2hr3RoleTokenList
++from k2hr3client.exception import K2hr3Exception
++
+ # Supported compute versions
+ NOVA_VERSIONS = base.APIVersionManager("compute", preferred_version=2)
+ NOVA_VERSIONS.load_supported_version(1.1,
+@@ -31,6 +43,7 @@ NOVA_VERSIONS.load_supported_version(2, {"client": nova_client, "version": 2})
+ NOVA_VERSION = NOVA_VERSIONS.get_active_version()['version']
+ 
+ LOG = logging.getLogger(__name__)
++_MAX_LINE_LENGTH = 1024 * 8
+ 
+ 
+ @memoized
+@@ -66,10 +79,10 @@ def cluster_get(request, cluster_id):
+ def cluster_delete(request, cluster_id):
+     return troveclient(request).clusters.delete(cluster_id)
+ 
+-
+ def cluster_create(request, name, volume, flavor, num_instances,
+                    datastore, datastore_version,
+-                   nics=None, root_password=None, locality=None):
++                   nics=None, root_password=None, locality=None,
++                   configuration=None):
+     instances = []
+     for i in range(num_instances):
+         instance = {}
+@@ -86,7 +99,8 @@ def cluster_create(request, name, volume, flavor, num_instances,
+         datastore,
+         datastore_version,
+         instances=instances,
+-        locality=locality)
++        locality=locality,
++        configuration=configuration)
+ 
+ 
+ def cluster_grow(request, cluster_id, new_instances):
+@@ -456,8 +470,256 @@ def configuration_instances(request, group_id):
+     return troveclient(request).configurations.instances(group_id)
+ 
+ 
++def _get_extdata_url(request, values, k2hr3_url, k2hr3_url_from_private_network):
++    try:
++        k2hr3_token = K2hr3Token(request.user.project_name, request.user.token.id)
++        http = K2hr3Http(k2hr3_url)
++        http.POST(k2hr3_token.create())
++        server_role_name = "/".join([values["cluster-name"],"server"])
++        k2hr3_role_token = K2hr3RoleToken(
++            k2hr3_token.token,
++            role=server_role_name,
++            expire=0
++        )
++        http.GET(k2hr3_role_token)
++        roletoken = k2hr3_role_token.token
++        if roletoken:
++            LOG.debug("roletoken {}".format(roletoken))
++            k2hr3_role_token_list = K2hr3RoleTokenList(
++                k2hr3_token.token,
++                role=server_role_name,
++                expand=True
++            )
++            http.GET(k2hr3_role_token_list)
++            registerpath = k2hr3_role_token_list.registerpath(roletoken)
++            if registerpath:
++                LOG.debug("registerpath {}".format(registerpath))
++                extdata_url = "{}/v1/extdata/trove/{}".format(k2hr3_url_from_private_network, registerpath)
++                LOG.debug(extdata_url)
++                return extdata_url
++            else:
++                raise Exception("no registerpath")
++        else:
++            raise Exception("no roletoken")
++    except Exception as e:
++        error_msg = 'create_k2hr3_role error {}'.format(e)
++        LOG.error(error_msg)
++        raise Exception(error_msg)
++
++def _create_k2hr3_role(request, values, k2hr3_url):
++    try:
++        k2hr3_token = K2hr3Token(request.user.project_name, request.user.token.id)
++        http = K2hr3Http(k2hr3_url)
++        http.POST(k2hr3_token.create())
++        policy_name="yrn:yahoo:::{}:policy:{}".format(request.user.project_name, values["cluster-name"])
++        k2hr3_role = K2hr3Role(k2hr3_token.token)
++        http.POST(
++            k2hr3_role.create(
++                name=values["cluster-name"],
++                policies=[policy_name],
++                alias=[]
++            )
++        )
++        server_role = K2hr3Role(k2hr3_token.token)
++        http.POST(
++            server_role.create(
++                name="/".join([values["cluster-name"],"server"]),
++                policies=[],
++                alias=[]
++            )
++        )
++        slave_role = K2hr3Role(k2hr3_token.token)
++        http.POST(
++            slave_role.create(
++                name="/".join([values["cluster-name"],"slave"]),
++                policies=[],
++                alias=[]
++            )
++        )
++    except Exception as e:
++        error_msg = 'create_k2hr3_role error {}'.format(e)
++        LOG.error(error_msg)
++        raise Exception(error_msg)
++
++
++def _create_k2hr3_policy(request, values, k2hr3_url):
++    try:
++        k2hr3_token = K2hr3Token(request.user.project_name, request.user.token.id)
++        http = K2hr3Http(k2hr3_url)
++        http.POST(k2hr3_token.create())
++        server_resource="yrn:yahoo:::{}:resource:{}/server".format(request.user.project_name, values["cluster-name"])
++        slave_resource="yrn:yahoo:::{}:resource:{}/slave".format(request.user.project_name, values["cluster-name"])
++        k2hr3_policy = K2hr3Policy(k2hr3_token.token)
++        http.POST(
++            k2hr3_policy.create(
++                name=values["cluster-name"],
++                effect='allow',
++                action=['yrn:yahoo::::action:read'],
++                resource=[server_resource, slave_resource],
++                condition=None,
++                alias=[]
++            )
++        )
++    except Exception as e:
++        error_msg = 'create_k2hr3_policy error {}'.format(e)
++        LOG.error(error_msg)
++        raise Exception(error_msg)
++
++def set_data(val: Path, projectname: str, clustername: str) -> str:
++    """Set data."""
++    if val.exists() is False:
++        raise K2hr3Exception(f'path must exist, not {val}')
++    if val.is_file() is False:
++        raise K2hr3Exception(
++            f'path must be a regular file, not {val}')
++    data = ""
++    with val.open(encoding='utf-8') as f:  # pylint: disable=no-member
++        line_len = 0
++        for line in iter(f.readline, ''):
++            #
++            # Replace TROVE_K2HDKC_CLUSTER_NAME with clustername
++            #
++            line = re.sub('__TROVE_K2HDKC_CLUSTER_NAME__', clustername,
++                          line)
++            #
++            # Replace TROVE_K2HDKC_TENANT_NAME with projectname
++            #
++            line = re.sub('__TROVE_K2HDKC_TENANT_NAME__', projectname,
++                          line)
++            line_len += len(line)
++            if line_len > _MAX_LINE_LENGTH:
++                raise K2hr3Exception('data too big')
++            data = "".join([data, line])  # type: ignore
++
++    return data
++
++
++def _create_k2hr3_resource(request, values, k2hr3_url):
++    #
++    # Makes a new k2hr3 resource from template
++    #
++    templ_path = Path('/opt/stack/k2hdkc_dbaas_trove/buildutils/custom_k2hr3_resource.txt')
++    data = set_data(templ_path, projectname=request.user.project_name, clustername=values["cluster-name"])
++
++    try:
++        k2hr3_token = K2hr3Token(request.user.project_name, request.user.token.id)
++        http = K2hr3Http(k2hr3_url)
++        http.POST(k2hr3_token.create())
++        k2hr3_resource = K2hr3Resource(k2hr3_token.token)
++        http.POST(
++            k2hr3_resource.create_conf_resource(
++                name=values["cluster-name"],
++                data_type='string',
++                resource_data=data,
++                keys={
++                    "cluster-name": values["cluster-name"],
++                    "chmpx-server-port": values["chmpx-server-port"],
++                    "chmpx-server-ctlport": values["chmpx-server-ctlport"],
++                    "chmpx-slave-ctlport": values["chmpx-slave-ctlport"]
++                },
++                alias=[]
++            )
++        )
++        k2hr3_resource_server = K2hr3Resource(k2hr3_token.token)
++        http.POST(
++            k2hr3_resource_server.create_conf_resource(
++                name="/".join([values["cluster-name"],"server"]),
++                data_type='string',
++                resource_data="",
++                keys={
++                    "chmpx-mode": "SERVER",
++                    "k2hr3-init-packages": "",
++                    "k2hr3-init-packagecloud-packages": "",
++                    "k2hr3-init-systemd-packages": ""
++                },
++                alias=[]
++            )
++        )
++        k2hr3_resource_slave = K2hr3Resource(k2hr3_token.token)
++        http.POST(
++            k2hr3_resource_slave.create_conf_resource(
++                name="/".join([values["cluster-name"],"slave"]),
++                data_type='string',
++                resource_data="",
++                keys={
++                    "chmpx-mode": "SLAVE",
++                    "k2hr3-init-packages": "",
++                    "k2hr3-init-packagecloud-packages": "",
++                    "k2hr3-init-systemd-packages": "",
++                    "k2hdkc-dbaas-add-user": 1
++                },
++                alias=[]
++            )
++        )
++    except Exception as e:
++        error_msg = 'create_k2hr3_resource error {}'.format(e)
++        LOG.error(error_msg)
++        raise Exception(error_msg)
++
++
+ def configuration_update(request, group_id, values):
+-    return troveclient(request).configurations.update(group_id, values)
++    try:
++        python_values = json.loads(values)
++        # Applies default values
++        if not 'chmpx-server-ctlport' in python_values:
++            python_values["chmpx-server-ctlport"] = 8021
++        if not 'chmpx-slave-ctlport' in python_values:
++            python_values["chmpx-slave-ctlport"] = 8031
++        if not 'chmpx-server-port' in python_values:
++            python_values["chmpx-server-port"] = 8020
++        if not 'cluster-name' in python_values:
++            python_values["cluster-name"] = "k2hdkccluster"
++
++        # Creates k2hr3 resources
++        # Gets k2hr3_url
++        horizon_config = getattr(settings, 'HORIZON_CONFIG', False)
++        if horizon_config is False:
++            raise Exception("HORIZON_CONFIG should exist in local_settings.py")
++        if not 'k2hr3' in horizon_config:
++            raise Exception("k2hr3 should exist in HORIZON_CONFIG of local_settings.py")
++        if not 'http_scheme' in horizon_config['k2hr3']:
++            raise Exception("http_scheme should exist in HORIZON_CONFIG['k2hr3'] of local_settings.py")
++        k2hr3_http_scheme = horizon_config['k2hr3']['http_scheme']
++        if not 'host' in horizon_config['k2hr3']:
++            raise Exception("host should exist in HORIZON_CONFIG['k2hr3'] of local_settings.py")
++        k2hr3_host = horizon_config['k2hr3']['host']
++        if not 'port' in horizon_config['k2hr3']:
++            raise Exception("port should exist in HORIZON_CONFIG['k2hr3'] of local_settings.py")
++        k2hr3_port = horizon_config['k2hr3']['port']
++        k2hr3_url = "{}://{}:{}".format(k2hr3_http_scheme, k2hr3_host, k2hr3_port)
++        _create_k2hr3_resource(request, python_values, k2hr3_url)
++
++        # Creates k2hr3 policies
++        _create_k2hr3_policy(request, python_values, k2hr3_url)
++
++        # Creates k2hr3 roles
++        _create_k2hr3_role(request, python_values, k2hr3_url)
++
++        # Creates k2hr3 roletoken
++        # Gets k2hr3_url_from_private_network
++        if not 'k2hr3_from_private_network' in horizon_config:
++            raise Exception("k2hr3_from_private_network should exist in HORIZON_CONFIG of local_settings.py")
++        if not 'http_scheme' in horizon_config['k2hr3_from_private_network']:
++            raise Exception("http_scheme should exist in HORIZON_CONFIG['k2hr3_from_private_network'] of local_settings.py")
++        k2hr3_http_scheme_from_private_network = horizon_config['k2hr3_from_private_network']['http_scheme']
++        if not 'host' in horizon_config['k2hr3_from_private_network']:
++            raise Exception("host should exist in HORIZON_CONFIG['k2hr3_from_private_network'] of local_settings.py")
++        k2hr3_host_from_private_network = horizon_config['k2hr3_from_private_network']['host']
++        if not 'port' in horizon_config['k2hr3_from_private_network']:
++            raise Exception("port should exist in HORIZON_CONFIG['k2hr3_from_private_network'] of local_settings.py")
++        k2hr3_port_from_private_network = horizon_config['k2hr3_from_private_network']['port']
++        k2hr3_url_from_private_network = "{}://{}:{}".format(
++                k2hr3_http_scheme_from_private_network,
++                k2hr3_host_from_private_network,
++                k2hr3_port_from_private_network)
++
++        extdata_url = _get_extdata_url(request, python_values, k2hr3_url, k2hr3_url_from_private_network)
++
++        python_values["extdata-url"] = extdata_url
++        return troveclient(request).configurations.update(group_id, json.dumps(python_values))
++    except Exception as e:
++        LOG.error('error {}'.format(e))
++    return False
+ 
+ 
+ def configuration_default(request, instance_id):
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

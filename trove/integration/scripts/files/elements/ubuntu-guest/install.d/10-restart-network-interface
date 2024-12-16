@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2024 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Tue Sep 10 2024
+# REVISION:
+#
+
+#------------------------------------------------------------------------------
+# [NOTE]
+# In the GuestAgent, the network interfaces used are ens3/4, but these are
+# renamed from eth0/1.
+# As a result(probably), DNS name resolution will time out if the interfaces
+# are not restarted.
+# To avoid this timeout, a special one-shot systemd service is incorporated,
+# and it attempts to restart the interfaces after systemd-resolved.service
+# is started.
+#------------------------------------------------------------------------------
+
+set -e
+#set -o xtrace
+
+#
+# Create /lib/systemd/system/k2hdkc-dbaas-interfaces.service
+#
+cat <<EOF > /lib/systemd/system/k2hdkc-dbaas-interfaces.service
+[Unit]
+Description=Restart netowork interface(ens3/4) on Guest Agent.
+After=systemd-resolved.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/libexec/k2hdkc-dbaas-interfaces-helper
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+#
+# Create symlink /etc/systemd/system/multi-user.target.wants/k2hdkc-dbaas-interfaces.service
+#
+ln -sf /lib/systemd/system/k2hdkc-dbaas-interfaces.service /etc/systemd/system/multi-user.target.wants/k2hdkc-dbaas-interfaces.service
+
+#
+# Create /usr/libexec/k2hdkc-dbaas-interfaces-helper
+#
+cat <<EOF > /usr/libexec/k2hdkc-dbaas-interfaces-helper
+#!/bin/sh
+#
+# Restart network interface ens3/4
+#
+
+echo "Restart network interface: ens3"
+ifdown ens3 || echo "Failed to down ens3 interface"
+ifup ens3   || echo "Failed to up ens3 interface"
+
+echo "Restart network interface: ens4"
+ifdown ens4 || echo "Failed to down ens4 interface"
+ifup ens4   || echo "Failed to up ens4 interface"
+
+exit 0
+EOF
+
+chmod +x /usr/libexec/k2hdkc-dbaas-interfaces-helper
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

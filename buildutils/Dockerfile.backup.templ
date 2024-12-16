@@ -1,0 +1,136 @@
+# syntax=docker/dockerfile:1
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2024 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Wed May 14 2024
+# REVISION:
+#
+
+#
+# Base Image
+#
+# Variables
+#	SETUP_PUSH_REGISTRY		Docker Register server and port. This value can be left empty and will use DockerHub as default.
+#							This value must be terminated by "/" charactor.
+#	SETUP_PUSH_REPOSITORY	Docker Repository name.
+#	SETUP_IMAGE_VERSTR		Base k2hdkc-trove image version string.
+#
+# Examples:
+#	FROM "antpickax/k2hdkc-trove:latest-ubuntu"
+#	FROM "localhost/antpickax/k2hdkc-trove:1.0.0-ubuntu"
+#
+
+FROM %%SETUP_PUSH_REGISTRY%%%%SETUP_PUSH_REPOSITORY%%/k2hdkc-trove:%%SETUP_IMAGE_VERSTR%%
+
+USER root
+
+#
+# Environments
+#
+# Variables
+#	SETUP_ENV				Setting environment variables(other than PROXY)
+#
+# Example:
+#	ENV DEBIAN_FRONTEND     "noninteractive"	(only ubuntu)
+#
+%%SETUP_ENV%%
+
+#
+# Proxy Environments
+#
+# Variables
+#	SETUP_PROXY_ENV			HTTP_PROXY, HTTPS_PROXY, NO_PROXY, Package manager configuarion file(only ubuntu), etc
+#
+# Example:
+#	ENV http_proxy          "<PROXY HOST URL>"
+#	ENV https_proxy         "<PROXY HOST URL>"
+#	ENV HTTP_PROXY          "<PROXY HOST URL>"
+#	ENV HTTPS_PROXY         "<PROXY HOST URL>"
+#	ENV no_proxy            "<FQDN,...>"
+#	ENV NO_PROXY            "<FQDN,...>"
+#
+%%SETUP_PROXY_ENV%%
+
+#
+# Preprocess before installing packages
+#
+# Example:
+#	COPY ./00-aptproxy.conf /etc/apt/apt.conf.d/00-aptproxy.conf"	(only ubuntu)
+#
+%%PRE_PROCESS_BEFORE_INSTALL%%
+
+#
+# Setup trove programs
+#
+# Variables
+#	SETUP_K2HDKC_VER		K2HDKC image version.
+#	PRE_PKG_UPDATE			Pre-process before updating package and information
+#	PKG_UPDATE				Update package and information
+#	PRE_BACKUP_PKG_INSTALL	Pre-process before installing packages for backup
+#	BACKUP_PKG_INSTALL		Installing packages for backup
+#	POST_BACKUP_PKG_INSTALL	Post-process after installing packages for backup
+#	PIP_PKG_INSTALL			Installing common package
+#
+# Examples:
+#	PRE_PKG_UPDATE			';'
+#	PKG_UPDATE				'apt-get update -y -qq --no-install-recommends --allow-unauthenticated'
+#	PRE_BACKUP_PKG_INSTALL	':'
+#	BACKUP_PKG_INSTALL		'apt-get install -y -qq --no-install-recommends --allow-unauthenticated lsb-release'
+#	POST_BACKUP_PKG_INSTALL	':'
+#	PIP_PKG_INSTALL			'apt-get install -y -qq --no-install-recommends --allow-unauthenticated python3-pip'
+#	PIP_INSTALL				'pip3 --no-cache-dir (--proxy=....) install -U -r requirements.txt'
+#	POST_PIP_INSTALL		':'
+#
+# [NOTE]
+# Before building your image, copy the backup directory to the same current
+# directory as this Dockerfile.
+# (This is usually done by k2hdkcdockerimage.sh build script.)
+#
+COPY ./backup /opt/trove/backup
+
+RUN set -x && \
+	%%PRE_PKG_UPDATE%% && \
+	%%PKG_UPDATE%% && \
+	%%PRE_BACKUP_PKG_INSTALL%% && \
+	%%BACKUP_PKG_INSTALL%% && \
+	%%POST_BACKUP_PKG_INSTALL%% && \
+	/opt/trove/backup/install.sh --datastore k2hdkc --datastore-version %%SETUP_K2HDKC_VER%% && \
+	%%PIP_PKG_INSTALL%% && \
+	%%PIP_INSTALL%% && \
+	%%POST_PIP_INSTALL%%
+
+#
+# User must be database(1001:1001)
+#
+USER database
+
+#
+# Set directory for working
+#
+WORKDIR /opt/trove/backup
+
+#
+# Set entrypoint (but the command is specified when run container)
+#
+ENTRYPOINT ["dumb-init", "--single-child", "--"]
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

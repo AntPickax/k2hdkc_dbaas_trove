@@ -1,0 +1,53 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/guestagent/datastore/mysql_common/service.py b/trove/guestagent/datastore/mysql_common/service.py
+index 933977b6..4f8132a9 100644
+--- a/trove/guestagent/datastore/mysql_common/service.py
++++ b/trove/guestagent/datastore/mysql_common/service.py
+@@ -620,6 +620,10 @@ class BaseMySqlApp(service.BaseDbApp):
+         else:
+             network_mode = constants.DOCKER_BRIDGE_MODE
+ 
++        # sysctls
++        if CONF.docker_container_sysctls:
++            sysctls = CONF.docker_container_sysctls
++
+         try:
+             docker_util.start_container(
+                 self.docker_client,
+@@ -632,7 +636,8 @@ class BaseMySqlApp(service.BaseDbApp):
+                     "MYSQL_ROOT_PASSWORD": root_pass,
+                     "MYSQL_INITDB_SKIP_TZINFO": 1,
+                 },
+-                command=command
++                command=command,
++                sysctls=sysctls
+             )
+ 
+             # Save root password
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

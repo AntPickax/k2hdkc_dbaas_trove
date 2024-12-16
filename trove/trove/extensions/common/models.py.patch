@@ -1,0 +1,94 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/extensions/common/models.py b/trove/extensions/common/models.py
+index 0ea791d0..a737e6c4 100644
+--- a/trove/extensions/common/models.py
++++ b/trove/extensions/common/models.py
+@@ -25,13 +25,13 @@ from trove.instance import models as base_models
+ 
+ LOG = logging.getLogger(__name__)
+ 
+-
+ def load_and_verify(context, instance_id,
+-                    enabled_datastore=['mysql', 'mariadb']):
++                    enabled_datastore=['mysql', 'mariadb', 'k2hdkc']):
+     """Check instance datastore.
+ 
+     Some API operations are only supported for some specific datastores.
+     """
++
+     instance = base_models.Instance.load(context, instance_id)
+ 
+     if instance.datastore_version.manager not in enabled_datastore:
+@@ -52,9 +52,23 @@ def load_and_verify(context, instance_id,
+ class Root(object):
+ 
+     @classmethod
++
+     def load(cls, context, instance_id):
+         load_and_verify(context, instance_id,
+-                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
++                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
++
++        # TODO(pdmars): remove the is_root_enabled call from the guest agent,
++        # just check the database for this information.
++        # If the root history returns null or raises an exception, the root
++        # user hasn't been enabled.
++        try:
++            root_history = RootHistory.load(context, instance_id)
++        except exception.NotFound:
++            return False
++        if not root_history:
++            return False
++        return True
++
+         # TODO(pdmars): remove the is_root_enabled call from the guest agent,
+         # just check the database for this information.
+         # If the root history returns null or raises an exception, the root
+@@ -71,7 +85,7 @@ class Root(object):
+     def create(cls, context, instance_id, root_password,
+                cluster_instances_list=None):
+         load_and_verify(context, instance_id,
+-                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
++                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
+         if root_password:
+             root = create_guest_client(context,
+                                        instance_id).enable_root_with_password(
+@@ -93,10 +107,9 @@ class Root(object):
+     @classmethod
+     def delete(cls, context, instance_id):
+         load_and_verify(context, instance_id,
+-                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
++                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
+         create_guest_client(context, instance_id).disable_root()
+ 
+-
+ class ClusterRoot(Root):
+ 
+     @classmethod
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

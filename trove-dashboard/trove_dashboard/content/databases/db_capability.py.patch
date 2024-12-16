@@ -1,0 +1,48 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove_dashboard/content/databases/db_capability.py b/trove_dashboard/content/databases/db_capability.py
+index 4d0025b..fd0caf7 100644
+--- a/trove_dashboard/content/databases/db_capability.py
++++ b/trove_dashboard/content/databases/db_capability.py
+@@ -21,12 +21,13 @@ PERCONA = "percona"
+ PERCONA_CLUSTER = "pxc"
+ REDIS = "redis"
+ VERTICA = "vertica"
++K2HDKC = "k2hdkc"
+ 
+ _mysql_compatible_datastores = (MYSQL, MARIA, PERCONA, PERCONA_CLUSTER)
+ _cluster_capable_datastores = (CASSANDRA, MARIA, MONGODB, PERCONA_CLUSTER,
+-                               REDIS, VERTICA)
++                               REDIS, VERTICA, K2HDKC)
+ _cluster_grow_shrink_capable_datastores = (CASSANDRA, MARIA, MONGODB,
+-                                           PERCONA_CLUSTER, REDIS)
++                                           PERCONA_CLUSTER, REDIS, K2HDKC)
+ 
+ 
+ def can_modify_cluster(datastore):
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#
