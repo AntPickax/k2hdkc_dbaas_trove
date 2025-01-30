@@ -18,23 +18,20 @@
 #
 
 diff --git a/trove/cmd/guest.py b/trove/cmd/guest.py
-index 556cab83..67a70beb 100644
+index ad5d8880..c3555eec 100644
 --- a/trove/cmd/guest.py
 +++ b/trove/cmd/guest.py
-@@ -77,7 +77,15 @@ def main():
-     # Create user and group for running docker container.
-     LOG.info('Creating user and group for database service')
-     uid = cfg.get_configuration_property('database_service_uid')
--    operating_system.create_user('database', uid)
-+
-+    #operating_system.create_user('database', uid)
-+    #
+@@ -87,7 +87,12 @@ def main():
+                    ).database_service_uid or CONF.database_service_uid
+     gid = CONF.get(CONF.datastore_manager).database_service_gid or uid
+     uname = CONF.get(CONF.datastore_manager).database_service_uname
+-    operating_system.create_user(uname, user_id=uid, group_id=gid)
 +    try:
 +        import shlex
 +        import subprocess
 +        subprocess.run(["id", "{}".format(shlex.quote(uid))])
 +    except subprocess.CalledProcessError:
-+        operating_system.create_user('database', uid)
++        operating_system.create_user(uname, user_id=uid, group_id=gid)
  
      # Mount device if needed.
      # When doing rebuild, the device should be already formatted but not

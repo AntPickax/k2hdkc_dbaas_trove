@@ -18,10 +18,10 @@
 #
 
 diff --git a/trove/guestagent/datastore/mysql_common/service.py b/trove/guestagent/datastore/mysql_common/service.py
-index 933977b6..4f8132a9 100644
+index d875f61b..4e9521bd 100644
 --- a/trove/guestagent/datastore/mysql_common/service.py
 +++ b/trove/guestagent/datastore/mysql_common/service.py
-@@ -620,6 +620,10 @@ class BaseMySqlApp(service.BaseDbApp):
+@@ -623,6 +623,10 @@ class BaseMySqlApp(service.BaseDbApp):
          else:
              network_mode = constants.DOCKER_BRIDGE_MODE
  
@@ -32,7 +32,7 @@ index 933977b6..4f8132a9 100644
          try:
              docker_util.start_container(
                  self.docker_client,
-@@ -632,7 +636,8 @@ class BaseMySqlApp(service.BaseDbApp):
+@@ -635,7 +639,8 @@ class BaseMySqlApp(service.BaseDbApp):
                      "MYSQL_ROOT_PASSWORD": root_pass,
                      "MYSQL_INITDB_SKIP_TZINFO": 1,
                  },

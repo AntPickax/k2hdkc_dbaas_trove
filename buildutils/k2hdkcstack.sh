@@ -1088,34 +1088,6 @@ else
 fi
 
 #==============================================================
-# Get Release version for this repository
-#==============================================================
-#
-# Create/Update RELEASE_VERSION for docker image
-#
-# [NOTE]
-# When generating a Docker image, the release version is required.
-# Therefore, create and update the RELEASE_VERSION file as the current user.
-#
-PRNTITLE "Create/Update RELEASE_VERSION file"
-
-if [ ! -f "${SCRIPTDIR}/make_release_version_file.sh" ]; then
-	PRNERR "Not found ${SCRIPTDIR}/make_release_version_file.sh file."
-	exit 1
-fi
-if ({ /bin/sh -c "${SCRIPTDIR}/make_release_version_file.sh" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-	PRNERR "Failed to create(update) RELEASE_VERSION file by ${SCRIPTDIR}/make_release_version_file.sh."
-	exit 1
-fi
-if [ ! -f "${SRCTOPDIR}/RELEASE_VERSION" ]; then
-	PRNERR "Not found ${SRCTOPDIR}/RELEASE_VERSION file."
-	exit 1
-fi
-CUR_REPO_VERSION=$(cat "${SRCTOPDIR}/RELEASE_VERSION")
-
-PRNSUCCESS "Create/Update RELEASE_VERSION file"
-
-#==============================================================
 # Check current execution environment
 #==============================================================
 # [NOTICE]
@@ -1599,7 +1571,7 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 	fi
 	if [ "${CLEAN_ALL_REPODIRS}" -eq 1 ]; then
 		cd "${STACK_USER_HOME}" || exit 1
-		sudo rm -rf bin bindep-venv cinder data devstack devstack.subunit glance horizon images keystone logs neutron ova novnc placement rements tempest trove ient nova neutron-tempest-plugin python-troveclient requirements .troveclient trove-dashboard .novaclient .local .cache .my.cnf "${SRCTOPDIRNAME}" 2>/dev/null
+		sudo rm -rf bin bindep-venv cinder data devstack devstack.subunit glance horizon images keystone logs neutron ova novnc placement rements tempest trove ient nova neutron-tempest-plugin python-troveclient requirements os-test-images swift .troveclient trove-dashboard .novaclient .local .cache .my.cnf "${SRCTOPDIRNAME}" 2>/dev/null
 	else
 		echo "    -----------------------------------------------------------------"
 		echo "    If you want to clean up files under the ${STACK_USER_NAME} user's"
@@ -1611,8 +1583,9 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 		echo "    $ sudo rm -rf bin bindep-venv cinder data devstack devstack.subunit"
 		echo "                  glance horizon images keystone logs neutron ova novnc"
 		echo "                  placement rements tempest trove nova neutron-tempest-plugin"
-		echo "                  python-troveclient requirements .troveclient trove-dashboard"
-		echo "                  .novaclient .local .cache .my.cnf ${SRCTOPDIRNAME}"
+		echo "                  python-troveclient requirements os-test-images swift"
+		echo "                  .troveclient trove-dashboard .novaclient .local .cache"
+		echo "                  .my.cnf ${SRCTOPDIRNAME}"
 		echo "    -----------------------------------------------------------------"
 		echo ""
 	fi
@@ -1981,7 +1954,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 		#
 		# Get mariadb repository setup
 		#
-		if ! curl -s -S -o /tmp/mariadb_repo_setup https://downloads.mariadb.com/MariaDB/mariadb_repo_setup; then
+		if ! curl -L -s -S -o /tmp/mariadb_repo_setup https://downloads.mariadb.com/MariaDB/mariadb_repo_setup; then
 			PRNERR "Failed to get mariadb repository setup."
 			exit 1
 		fi
@@ -2292,6 +2265,34 @@ if [ "${RUN_MODE}" = "start" ]; then
 		PRNINFO "Installed debootstrap package."
 	else
 		PRNINFO "Already installed debootstrap package."
+	fi
+
+	#
+	# [PRE-PROCESSING] Install xorriso packages for mkisofs command
+	#
+	# [NOTE]
+	# Install xorriso, which contains the mkisofs command.
+	# This is used in os-test-images.
+	#
+	PRNMSG "[PRE-PROCESSING] Install xorriso packages for mkisofs command"
+
+	if ! command -v mkisofs >/dev/null 2>&1; then
+		if ! dnf list installed | grep -q '^xorriso\.'; then
+			#
+			# Install xorriso packages
+			#
+			PRNINFO "Not found xorriso package, so install it."
+
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y xorriso" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to install xorriso package."
+				exit 1
+			fi
+			PRNINFO "Installed xorriso package."
+		else
+			PRNINFO "Already installed xorriso package. But why does not exist mkisofs command? (this script will fail.)"
+		fi
+	else
+		PRNINFO "Already installed mkisofs command."
 	fi
 
 	#

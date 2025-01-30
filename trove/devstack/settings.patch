@@ -18,7 +18,7 @@
 #
 
 diff --git a/devstack/settings b/devstack/settings
-index b10a673a..0615261d 100644
+index 528c98e9..3224f034 100644
 --- a/devstack/settings
 +++ b/devstack/settings
 @@ -90,13 +90,21 @@ if [ "$TROVE_ENABLE_LOCAL_REGISTRY" == "True" ] ; then
@@ -38,8 +38,8 @@ index b10a673a..0615261d 100644
      TROVE_DATABASE_BACKUP_IMAGE_MYSQL=${TROVE_DATABASE_BACKUP_IMAGE_MYSQL:-""}
      TROVE_DATABASE_BACKUP_IMAGE_POSTGRES=${TROVE_DATABASE_BACKUP_IMAGE_POSTGRES:-""}
 +    #K2HDKC-START
-+    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove:1.0.1-ubuntu"}
-+    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove-backup:1.0.1-ubuntu"}
++    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove:-ubuntu"}
++    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove-backup:-ubuntu"}
 +    TROVE_INSECURE_DOCKER_REGISTRIES=${TROVE_INSECURE_DOCKER_REGISTRIES:-""}
 +    #K2HDKC-END
  fi

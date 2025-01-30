@@ -18,10 +18,10 @@
 #
 
 diff --git a/trove/common/cfg.py b/trove/common/cfg.py
-index 84f41125..894fb858 100644
+index 31795dbc..1f6a22c1 100644
 --- a/trove/common/cfg.py
 +++ b/trove/common/cfg.py
-@@ -420,7 +420,8 @@ common_opts = [
+@@ -422,7 +422,8 @@ common_opts = [
                           'couchdb': 'f0a9ab7b-66f7-4352-93d7-071521d44c7c',
                           'vertica': 'a8d805ae-a3b2-c4fd-gb23-b62cee5201ae',
                           'db2': 'e040cd37-263d-4869-aaa6-c62aa97523b5',
@@ -31,7 +31,7 @@ index 84f41125..894fb858 100644
                  help='Unique ID to tag notification events.'),
      cfg.StrOpt('network_label_regex', default='^private$',
                 help='Regular expression to match Trove network labels.',
-@@ -450,6 +451,8 @@ common_opts = [
+@@ -452,6 +453,8 @@ common_opts = [
                 help='The guest info filename found in the injected config '
                      'location.  If a full path is specified then it will '
                      'be used as the path to the guest info file'),
@@ -40,7 +40,7 @@ index 84f41125..894fb858 100644
      cfg.DictOpt('datastore_registry_ext', default=dict(),
                  help='Extension for default datastore managers. '
                       'Allows the use of custom managers for each of '
-@@ -612,6 +615,11 @@ mysql_opts = [
+@@ -620,6 +623,11 @@ mysql_opts = [
               'your-registry/your-repo/db-backup-mysql:5.7 is used for mysql'
               'datastore with version 5.7'
      ),
@@ -52,19 +52,21 @@ index 84f41125..894fb858 100644
  ]
  
  # Percona
-@@ -1060,6 +1068,11 @@ postgresql_opts = [
-                 help='List of TCP ports and/or port ranges to open '
-                      'in the security group (only applicable '
-                      'if trove_security_groups_support is True).'),
+@@ -1163,7 +1171,12 @@ postgresql_opts = [
+                deprecated_reason='Will be replaced by configuration group '
+                                  'option: log_min_duration_statement'),
+     cfg.IntOpt('default_password_length', default=36,
+-               help='Character length of generated passwords.')
++               help='Character length of generated passwords.'),
 +    cfg.StrOpt(
 +        'guest_datastore_manager',
 +        default='trove.guestagent.datastore.postgres.manager.PostgresManager',
 +        help='Guest Agent Datastore Manager for PostgreSQL'
 +    ),
-     cfg.ListOpt('udp_ports', default=[], item_type=ListOfPortsType,
-                 help='List of UDP ports and/or port ranges to open '
-                      'in the security group (only applicable '
-@@ -1371,6 +1384,99 @@ mariadb_opts = [
+ ]
+ 
+ # Apache CouchDB
+@@ -1445,6 +1458,105 @@ mariadb_opts = [
               'your-registry/your-repo/db-backup-mariadb:10.3 is used for '
               'mariadb datastore with version 10.3'
      ),
@@ -80,6 +82,12 @@ index 84f41125..894fb858 100644
 +    'k2hdkc', title='K2HDKC options',
 +    help="Oslo option group designed for K2hdkc datastore")
 +k2hdkc_opts = [
++    cfg.StrOpt('database_service_uname', default='database',
++               help='The name of database service user.'),
++    cfg.StrOpt('database_service_uid',
++               help='The UID of database service user.'),
++    cfg.StrOpt('database_service_gid',
++               help='The GID of database service user.'),
 +    cfg.BoolOpt('icmp', default=False,
 +                help='Whether to permit ICMP.',
 +                deprecated_for_removal=True),
@@ -164,7 +172,7 @@ index 84f41125..894fb858 100644
  ]
  
  # RPC version groups
-@@ -1499,6 +1605,7 @@ CONF.register_group(mariadb_group)
+@@ -1573,6 +1685,7 @@ CONF.register_group(mariadb_group)
  CONF.register_group(network_group)
  CONF.register_group(service_credentials_group)
  CONF.register_group(guest_agent_group)
@@ -172,7 +180,7 @@ index 84f41125..894fb858 100644
  
  CONF.register_opts(mysql_opts, mysql_group)
  CONF.register_opts(percona_opts, percona_group)
-@@ -1515,6 +1622,7 @@ CONF.register_opts(mariadb_opts, mariadb_group)
+@@ -1589,6 +1702,7 @@ CONF.register_opts(mariadb_opts, mariadb_group)
  CONF.register_opts(network_opts, network_group)
  CONF.register_opts(service_credentials_opts, service_credentials_group)
  CONF.register_opts(guest_agent_opts, guest_agent_group)

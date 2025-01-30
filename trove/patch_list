@@ -38,13 +38,12 @@ trove/cmd/guest.py
 trove/common/cfg.py
 trove/common/configurations.py
 trove/common/template.py
-trove/db/sqlalchemy/migrate_repo/migrate.cfg
-trove/db/sqlalchemy/migrate_repo/versions/020_configurations.py
+trove/common/constants.py
+trove/db/sqlalchemy/migrations/versions/906cffda7b29_init_trove_db.py
 trove/db/sqlalchemy/session.py
 trove/extensions/common/models.py
 trove/guestagent/datastore/mysql_common/service.py
 trove/guestagent/datastore/postgres/service.py
-trove/guestagent/dbaas.py
 trove/guestagent/utils/docker.py
 
 [COPY]
