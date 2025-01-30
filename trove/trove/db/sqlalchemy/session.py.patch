@@ -18,7 +18,7 @@
 #
 
 diff --git a/trove/db/sqlalchemy/session.py b/trove/db/sqlalchemy/session.py
-index 630c3d46..311c2b4c 100644
+index 3a833705..472bda65 100644
 --- a/trove/db/sqlalchemy/session.py
 +++ b/trove/db/sqlalchemy/session.py
 @@ -43,6 +43,7 @@ def configure_db(options, models_mapper=None):

@@ -17,29 +17,17 @@
 # REVISION:
 #
 
-diff --git a/trove/guestagent/dbaas.py b/trove/guestagent/dbaas.py
-index 44de755c..2c914972 100644
---- a/trove/guestagent/dbaas.py
-+++ b/trove/guestagent/dbaas.py
-@@ -33,6 +33,7 @@ from trove.common.i18n import _
- from trove.common import utils
- 
- LOG = logging.getLogger(__name__)
-+
- defaults = {
-     'mysql':
-         'trove.guestagent.datastore.mysql.manager.Manager',
-@@ -58,7 +59,10 @@ defaults = {
+diff --git a/trove/common/constants.py b/trove/common/constants.py
+index 42af5809..5210697d 100644
+--- a/trove/common/constants.py
++++ b/trove/common/constants.py
+@@ -46,4 +46,6 @@ REGISTRY_EXT_DEFAULTS = {
          'trove.guestagent.datastore.experimental.vertica.manager.Manager',
      'db2':
          'trove.guestagent.datastore.experimental.db2.manager.Manager',
 +    'k2hdkc':
 +        'trove.guestagent.datastore.experimental.k2hdkc.manager.Manager',
  }
-+
- CONF = cfg.CONF
- 
- 
 
 #
 # Local variables:

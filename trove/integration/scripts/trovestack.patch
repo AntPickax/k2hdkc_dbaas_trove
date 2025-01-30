@@ -18,7 +18,7 @@
 #
 
 diff --git a/integration/scripts/trovestack b/integration/scripts/trovestack
-index 50ec9792..881ddcb3 100755
+index 2e87e45c..9d6daeb1 100755
 --- a/integration/scripts/trovestack
 +++ b/integration/scripts/trovestack
 @@ -780,6 +780,16 @@ function cmd_build_image() {

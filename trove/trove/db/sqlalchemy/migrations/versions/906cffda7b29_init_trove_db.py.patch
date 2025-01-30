@@ -1,0 +1,41 @@
+#
+# K2HDKC DBaaS based on Trove
+#
+# Copyright 2020 Yahoo Japan Corporation
+#
+# K2HDKC DBaaS is a Database as a Service compatible with Trove which
+# is DBaaS for OpenStack.
+# Using K2HR3 as backend and incorporating it into Trove to provide
+# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
+# provided as AntPickax.
+# 
+# For the full copyright and license information, please view
+# the license file that was distributed with this source code.
+#
+# AUTHOR:
+# CREATE:
+# REVISION:
+#
+
+diff --git a/trove/db/sqlalchemy/migrations/versions/906cffda7b29_init_trove_db.py b/trove/db/sqlalchemy/migrations/versions/906cffda7b29_init_trove_db.py
+index a8ceed3e..5e3c9b13 100644
+--- a/trove/db/sqlalchemy/migrations/versions/906cffda7b29_init_trove_db.py
++++ b/trove/db/sqlalchemy/migrations/versions/906cffda7b29_init_trove_db.py
+@@ -286,7 +286,7 @@ def upgrade():
+                nullable=False, primary_key=True),
+         Column('configuration_key', String(128),
+                nullable=False, primary_key=True),
+-        Column('configuration_value', String(128)),
++        Column('configuration_value', String(512)),
+         Column('deleted', Boolean(), nullable=False, default=False),
+         Column('deleted_at', DateTime()),
+     )
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

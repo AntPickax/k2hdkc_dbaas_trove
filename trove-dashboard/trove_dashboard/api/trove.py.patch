@@ -18,7 +18,7 @@
 #
 
 diff --git a/trove_dashboard/api/trove.py b/trove_dashboard/api/trove.py
-index d3a0561..9c73a34 100644
+index d3a0561..14d99db 100644
 --- a/trove_dashboard/api/trove.py
 +++ b/trove_dashboard/api/trove.py
 @@ -23,6 +23,18 @@ from openstack_dashboard.api import base
@@ -48,11 +48,8 @@ index d3a0561..9c73a34 100644
  
  
  @memoized
-@@ -66,10 +79,10 @@ def cluster_get(request, cluster_id):
- def cluster_delete(request, cluster_id):
-     return troveclient(request).clusters.delete(cluster_id)
+@@ -69,7 +82,8 @@ def cluster_delete(request, cluster_id):
  
--
  def cluster_create(request, name, volume, flavor, num_instances,
                     datastore, datastore_version,
 -                   nics=None, root_password=None, locality=None):
@@ -61,7 +58,7 @@ index d3a0561..9c73a34 100644
      instances = []
      for i in range(num_instances):
          instance = {}
-@@ -86,7 +99,8 @@ def cluster_create(request, name, volume, flavor, num_instances,
+@@ -86,7 +100,8 @@ def cluster_create(request, name, volume, flavor, num_instances,
          datastore,
          datastore_version,
          instances=instances,
@@ -71,7 +68,7 @@ index d3a0561..9c73a34 100644
  
  
  def cluster_grow(request, cluster_id, new_instances):
-@@ -456,8 +470,256 @@ def configuration_instances(request, group_id):
+@@ -456,8 +471,256 @@ def configuration_instances(request, group_id):
      return troveclient(request).configurations.instances(group_id)
  
  

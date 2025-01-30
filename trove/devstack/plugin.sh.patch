@@ -18,7 +18,7 @@
 #
 
 diff --git a/devstack/plugin.sh b/devstack/plugin.sh
-index af7f00f0..acce0f6e 100644
+index 0a07e992..080af5e3 100644
 --- a/devstack/plugin.sh
 +++ b/devstack/plugin.sh
 @@ -239,6 +239,7 @@ function configure_trove {
@@ -85,8 +85,8 @@ index af7f00f0..acce0f6e 100644
 +    # [NOTE]
 +    # If you set TROVE_DATASTORE_TYPE and TROVE_DATASTORE_VERSION to k2hdkc:x.x.x as environment variables,
 +    # it should be possible to configure it automatically with the above settings.
-+	# Currently we keep set mysql as default, do not set these variables (the default is mysql) and register
-+	# k2hdkc with the following process.
++    # Currently we keep set mysql as default, do not set these variables (the default is mysql) and register
++    # k2hdkc with the following process.
 +    #
 +    echo "Register the image in datastore for k2hdkc"
 +
