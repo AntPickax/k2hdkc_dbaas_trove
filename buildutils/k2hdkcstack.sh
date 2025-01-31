@@ -1664,6 +1664,8 @@ if [ "${RUN_MODE}" = "start" ]; then
 
 	if lsmod | grep -q ^kvm_amd; then
 		PRNINFO "Found kvm_amd driver and it is loaded."
+	elif lsmod | grep -q ^kvm_intel; then
+		PRNINFO "Found kvm_intel driver and it is loaded."
 	else
 		PRNERR "Not found kvm_amd driver and it is not loaded."
 		exit 1
@@ -1675,8 +1677,11 @@ if [ "${RUN_MODE}" = "start" ]; then
 	PRNMSG "[PRE-PROCESSING] Check nest kvm_amd"
 
 	_KVM_AMD_NEST=$(cat /sys/module/kvm_amd/parameters/nested 2>/dev/null)
+	_KVM_ITL_NEST=$(cat /sys/module/kvm_intel/parameters/nested 2>/dev/null)
 	if [ -n "${_KVM_AMD_NEST}" ] && [ "${_KVM_AMD_NEST}" -eq 1 ]; then
 		PRNINFO "Already set nest kvm_amd driver."
+	elif [ -n "${_KVM_ITL_NEST}" ] && [ "${_KVM_ITL_NEST}" = "Y" ]; then
+		PRNINFO "Already set nest kvm_intel driver."
 	else
 		PRNWARN "Not set kvm_amd driver nest, so set it."
 
