@@ -1327,26 +1327,26 @@ while [ $# -ne 0 ]; do
 	if [ -z "$1" ]; then
 		break;
 
-	elif [ "$1" = "-h" ] || [ "$1" = "-H" ] || [ "$1" = "--help" ] || [ "$1" = "--HELP" ]; then
+	elif echo "$1" | grep -q -i -e "^-h$" -e "^--help$"; then
 		Usage
 		exit 0
 
-	elif [ "$1" = "start" ] || [ "$1" = "START" ] || [ "$1" = "s" ] || [ "$1" = "S" ]; then
+	elif echo "$1" | grep -q -i -e "^s$" -e "^start$"; then
 		RUN_MODE="start"
 
-	elif [ "$1" = "stop" ] || [ "$1" = "STOP" ] || [ "$1" = "a" ] || [ "$1" = "A" ]; then
+	elif echo "$1" | grep -q -i -e "^a$" -e "^stop$"; then
 		RUN_MODE="stop"
 
-	elif [ "$1" = "backup" ] || [ "$1" = "BACKUP" ] || [ "$1" = "b" ] || [ "$1" = "B" ]; then
+	elif echo "$1" | grep -q -i -e "^b$" -e "^backup$"; then
 		RUN_MODE="backup"
 
-	elif [ "$1" = "delete" ] || [ "$1" = "DELETE" ] || [ "$1" = "d" ] || [ "$1" = "D" ]; then
+	elif echo "$1" | grep -q -i -e "^d$" -e "^delete$"; then
 		RUN_MODE="delete"
 
-	elif [ "$1" = "restore" ] || [ "$1" = "RESTORE" ] || [ "$1" = "r" ] || [ "$1" = "R" ]; then
+	elif echo "$1" | grep -q -i -e "^r$" -e "^restore$"; then
 		RUN_MODE="restore"
 
-	elif [ "$1" = "status" ] || [ "$1" = "STATUS" ] || [ "$1" = "t" ] || [ "$1" = "T" ]; then
+	elif echo "$1" | grep -q -i -e "^t$" -e "^status$"; then
 		RUN_MODE="status"
 
 	else

@@ -198,14 +198,14 @@ Below are some examples depending on the Docker registry/repository:
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.14 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.14 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.15 --image-version 1.0.1
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
 ```
 
 ### build_image(build) mode
@@ -214,14 +214,14 @@ Below are some examples depending on the Docker registry/repository:
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.14 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.14 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.15 --image-version 1.0.1
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
 ```
 
 ### upload_image(upload) mode
@@ -230,12 +230,12 @@ Below are some examples depending on the Docker registry/repository:
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.14 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.14 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.15 --image-version 1.0.1
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.14 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
 ```

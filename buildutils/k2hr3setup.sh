@@ -475,32 +475,32 @@ while [ $# -ne 0 ]; do
 	if [ -z "$1" ]; then
 		break
 
-	elif [ "$1" = "-h" ] || [ "$1" = "-H" ] || [ "$1" = "--help" ] || [ "$1" = "--HELP" ]; then
+	elif echo "$1" | grep -q -i -e "^-h$" -e "^--help$"; then
 		func_usage "${SCRIPTNAME}"
 		exit 0
 
-	elif [ "$1" = "--clear" ] || [ "$1" = "--CLEAR" ] || [ "$1" = "-c" ] || [ "$1" = "-C" ]; then
+	elif echo "$1" | grep -q -i -e "^-c$" -e "^--clear$"; then
 		if [ -n "${OPT_DO_CLEAR}" ]; then
 			PRNERR "Already specified \"--clear\" or \"--no_clear\" options."
 			exit 1
 		fi
 		OPT_DO_CLEAR=1
 
-	elif [ "$1" = "--no_clear" ] || [ "$1" = "--NO_CLEAR" ] || [ "$1" = "-nc" ] || [ "$1" = "-NC" ]; then
+	elif echo "$1" | grep -q -i -e "^-nc$" -e "^--no_clear$"; then
 		if [ -n "${OPT_DO_CLEAR}" ]; then
 			PRNERR "Already specified \"--clear\" or \"--no_clear\" options."
 			exit 1
 		fi
 		OPT_DO_CLEAR=0
 
-	elif [ "$1" = "--use_parent_auto" ] || [ "$1" = "--USE_PARENT_AUTO" ] || [ "$1" = "-upa" ] || [ "$1" = "-UPA" ]; then
+	elif echo "$1" | grep -q -i -e "^-upa$" -e "^--use_parent_auto$"; then
 		if [ -n "${OPT_PARENT_TYPE}" ]; then
 			PRNERR "Already specified \"--use_parent_auto\" or \"--use_parent_custom\" or \"--use_parent_nic\" or \"--use_parent_name\" options."
 			exit 1
 		fi
 		OPT_PARENT_TYPE="Auto"
 
-	elif [ "$1" = "--use_parent_custom" ] || [ "$1" = "--USE_PARENT_CUSTOM" ] || [ "$1" = "-upc" ] || [ "$1" = "-UPC" ]; then
+	elif echo "$1" | grep -q -i -e "^-upc$" -e "^--use_parent_custom$"; then
 		if [ -n "${OPT_PARENT_TYPE}" ]; then
 			PRNERR "Already specified \"--use_parent_auto\" or \"--use_parent_custom\" or \"--use_parent_nic\" or \"--use_parent_name\" options."
 			exit 1
@@ -514,21 +514,21 @@ while [ $# -ne 0 ]; do
 		TYPE_CUSTOM_PARENT_HOSTNAME=
 		TYPE_CUSTOM_PARENT_IP="$1"
 
-	elif [ "$1" = "--use_parent_nic" ] || [ "$1" = "--USE_PARENT_NIC" ] || [ "$1" = "-upnic" ] || [ "$1" = "-UPNIC" ]; then
+	elif echo "$1" | grep -q -i -e "^-upnic$" -e "^--use_parent_nic$"; then
 		if [ -n "${OPT_PARENT_TYPE}" ]; then
 			PRNERR "Already specified \"--use_parent_auto\" or \"--use_parent_custom\" or \"--use_parent_nic\" or \"--use_parent_name\" options."
 			exit 1
 		fi
 		OPT_PARENT_TYPE="Nic"
 
-	elif [ "$1" = "--use_parent_name" ] || [ "$1" = "--USE_PARENT_NAME" ] || [ "$1" = "-upname" ] || [ "$1" = "-UPNAME" ]; then
+	elif echo "$1" | grep -q -i -e "^-upname$" -e "^--use_parent_name$"; then
 		if [ -n "${OPT_PARENT_TYPE}" ]; then
 			PRNERR "Already specified \"--use_parent_auto\" or \"--use_parent_custom\" or \"--use_parent_nic\" or \"--use_parent_name\" options."
 			exit 1
 		fi
 		OPT_PARENT_TYPE="Name"
 
-	elif [ "$1" = "--k2hr3_app_port" ] || [ "$1" = "--K2HR3_APP_PORT" ] || [ "$1" = "-app" ] || [ "$1" = "-APP" ]; then
+	elif echo "$1" | grep -q -i -e "^-app$" -e "^--k2hr3_app_port$"; then
 		if [ -n "${OPT_APP_PORT}" ]; then
 			PRNERR "Already specified \"--k2hr3_app_port(-app)\" option."
 			exit 1
@@ -544,7 +544,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_APP_PORT="$1"
 
-	elif [ "$1" = "--k2hr3_app_port_ext" ] || [ "$1" = "--K2HR3_APP_PORT_EXT" ] || [ "$1" = "-appext" ] || [ "$1" = "-APPEXT" ]; then
+	elif echo "$1" | grep -q -i -e "^-appext$" -e "^--k2hr3_app_port_ext$"; then
 		if [ -n "${OPT_APP_PORT_EXT}" ]; then
 			PRNERR "Already specified \"--k2hr3_app_port_ext(-appext)\" option."
 			exit 1
@@ -560,7 +560,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_APP_PORT_EXT="$1"
 
-	elif [ "$1" = "--k2hr3_api_port" ] || [ "$1" = "--K2HR3_API_PORT" ] || [ "$1" = "-api" ] || [ "$1" = "-API" ]; then
+	elif echo "$1" | grep -q -i -e "^-api$" -e "^--k2hr3_api_port$"; then
 		if [ -n "${OPT_API_PORT}" ]; then
 			PRNERR "Already specified \"--k2hr3_api_port(-api)\" option."
 			exit 1
@@ -576,7 +576,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_API_PORT="$1"
 
-	elif [ "$1" = "--k2hr3_api_port_ext" ] || [ "$1" = "--K2HR3_API_PORT_EXT" ] || [ "$1" = "-apiext" ] || [ "$1" = "-APIEXT" ]; then
+	elif echo "$1" | grep -q -i -e "^-apiext$" -e "^--k2hr3_api_port_ext$"; then
 		if [ -n "${OPT_API_PORT_EXT}" ]; then
 			PRNERR "Already specified \"--k2hr3_api_port_ext(-apiext)\" option."
 			exit 1
@@ -592,7 +592,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_API_PORT_EXT="$1"
 
-	elif [ "$1" = "--up_wait_count" ] || [ "$1" = "--UP_WAIT_COUNT" ] || [ "$1" = "-uwc" ] || [ "$1" = "-UWC" ]; then
+	elif echo "$1" | grep -q -i -e "^-uwc$" -e "^--up_wait_count$"; then
 		if [ -n "${OPT_UP_WAIT_COUNT}" ]; then
 			PRNERR "Already specified \"--up_wait_count\" option."
 			exit 1
