@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 #
 # K2HDKC DBaaS based on Trove
 #
