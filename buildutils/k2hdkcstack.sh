@@ -660,8 +660,8 @@ TestPatchFiles()
 GetLatestK2hdkcImageVersion()
 {
 	if ! K2HDKC_DOCKER_IMAGE_VERSION=$(curl https://hub.docker.com/v2/repositories/antpickax/k2hdkc/tags 2>/dev/null | python -m json.tool | grep '\"name\"' | sed -e 's#^[[:space:]]*"name"[[:space:]]*[:][[:space:]]*##gi' -e 's#"##g' -e 's#,##g' -e 's#[-].*$##g' -e 's#[[space:]]*$##g' | grep -v 'latest' | sort -r | uniq | head -1 | tr -d '\n'); then
-		PRNWARN "Could not get the latest version number of K2HDKC docker image from DockerHub(antpickax/k2hdkc), but use 1.0.14 for fault tolerant."
-		K2HDKC_DOCKER_IMAGE_VERSION="1.0.14"
+		PRNWARN "Could not get the latest version number of K2HDKC docker image from DockerHub(antpickax/k2hdkc), but use 1.0.15 for fault tolerant."
+		K2HDKC_DOCKER_IMAGE_VERSION="1.0.15"
 	fi
 	return 0
 }
