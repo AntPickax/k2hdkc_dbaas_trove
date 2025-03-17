@@ -744,7 +744,7 @@ SetupInstallPackagesValueRocky()
 	PKGMAN_BIN="dnf"
 	PKGMAN_UPDATE_COMMAND="update"
 	PKGMAN_INSTALL_COMMAND="install"
-	PKGMAN_UPDATE_ARGS="-y -q"
+	PKGMAN_UPDATE_ARGS="-y --nobest --skip-broken -q"
 	PKGMAN_INSTALL_ARGS="-y -q"
 
 	#
