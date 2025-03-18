@@ -8,7 +8,7 @@
 # Using K2HR3 as backend and incorporating it into Trove to provide
 # DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components
 # provided as AntPickax.
-# 
+#
 # For the full copyright and license information, please view
 # the license file that was distributed with this source code.
 #
@@ -18,7 +18,7 @@
 #
 
 diff --git a/devstack/settings b/devstack/settings
-index 528c98e9..3224f034 100644
+index 528c98e9..71c42be4 100644
 --- a/devstack/settings
 +++ b/devstack/settings
 @@ -90,13 +90,21 @@ if [ "$TROVE_ENABLE_LOCAL_REGISTRY" == "True" ] ; then
@@ -38,8 +38,8 @@ index 528c98e9..3224f034 100644
      TROVE_DATABASE_BACKUP_IMAGE_MYSQL=${TROVE_DATABASE_BACKUP_IMAGE_MYSQL:-""}
      TROVE_DATABASE_BACKUP_IMAGE_POSTGRES=${TROVE_DATABASE_BACKUP_IMAGE_POSTGRES:-""}
 +    #K2HDKC-START
-+    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove:-ubuntu"}
-+    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove-backup:-ubuntu"}
++    TROVE_DATABASE_IMAGE_K2HDKC=${TROVE_DATABASE_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove:1.0.2-alpine"}
++    TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-"docker.io/antpickax/k2hdkc-trove-backup:1.0.2-alpine"}
 +    TROVE_INSECURE_DOCKER_REGISTRIES=${TROVE_INSECURE_DOCKER_REGISTRIES:-""}
 +    #K2HDKC-END
  fi

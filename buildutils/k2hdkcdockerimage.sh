@@ -172,11 +172,10 @@ SetupControlPushImages()
 	if [ -z "${CI}" ]; then
 		ENABLE_PUSH_IMAGE=0
 	else
-		_TMP_CI_ENABLE=$(echo "${CI}" | grep -i "true")
-		if [ -z "${_TMP_CI_ENABLE}" ]; then
-			ENABLE_PUSH_IMAGE=0
-		else
+		if echo "${CI}" | grep -q -i "true"; then
 			ENABLE_PUSH_IMAGE=1
+		else
+			ENABLE_PUSH_IMAGE=0
 		fi
 	fi
 	return 0

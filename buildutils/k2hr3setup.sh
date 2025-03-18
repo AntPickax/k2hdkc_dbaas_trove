@@ -944,7 +944,7 @@ PRNMSG "Create related OpenStack resources"
 #
 # Get Flavor ID ( = 'ds1G' )
 #
-FLAVOR_ID=$(openstack flavor list -f value | grep ds1G | awk '{print $1}')
+FLAVOR_ID=$(openstack flavor list -f value | grep 'ds1G' | awk '{print $1}')
 if [ -z "${FLAVOR_ID}" ]; then
 	PRNERR "Could not get flavor id for \"ds1G\"."
 	exit 1
@@ -1103,6 +1103,7 @@ if [ "${OPT_UP_WAIT_COUNT}" -eq 0 ]; then
 else
 	WAIT_COUNT=${OPT_UP_WAIT_COUNT}
 fi
+
 IS_INSTANCE_UP=0
 while [ "${WAIT_COUNT}" -ne 0 ]; do
 	sleep 10
