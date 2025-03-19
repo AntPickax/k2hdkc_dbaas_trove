@@ -172,11 +172,11 @@ Also, if you want to set these environment variables for the Docker image you ar
 ## Execution example
 Below is an example of executing `k2hdkcdockerimage.sh`.
 
-When executing, first `clone` this repository and switch to the branch you want to use.
+When executing, first `clone` this repository and switch to the branch or tag you want to use.
 ```
 $ git clone https://github.com/yahoojapan/k2hdkc_dbaas_trove.git
 $ cd k2hdkc_dbaas_trove
-$ git checkout stable/2024.1
+$ git checkout v1.0.2
 ```
 
 ### cleanup / cleanup-all mode
@@ -193,19 +193,22 @@ $ ./k2hdkcdockerimage.sh cleanup-all
 ```
 
 ### generate_dockerfile mode
-Below are some examples depending on the Docker registry/repository:
+Below are some examples depending on the Docker registry/repository:  
+
+For `<k2hdkc version>`, specify the version of [k2hdkc](https://github.com/yahoojapan/k2hdkc/releases).  
+`<k2hdkc dbaas trove version>` should specify the version of this repository that you cloned (the most recent version of the tag or branch).  
 
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.15 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh generate_dockerfile -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
 ```
 
 ### build_image(build) mode
@@ -214,14 +217,14 @@ Below are some examples depending on the Docker registry/repository:
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.15 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh build_image -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
+$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh build_image -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh build_image -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh build_image -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
 ```
 
 ### upload_image(upload) mode
@@ -230,12 +233,12 @@ Below are some examples depending on the Docker registry/repository:
 #### docker.io/antpickax
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.15 --image-version 1.0.1
-$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.15 --image-version 1.0.1
+$ ./k2hdkcdockerimage.sh upload_image -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
+$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version>
 ```
 #### docker.io/<user>
 ```
 $ cd k2hdkc_dbaas_trove/buildutils
-$ ./k2hdkcdockerimage.sh upload_image -o alpine -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
-$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b 1.0.15 --image-version 1.0.1 --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh upload_image -o alpine -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
+$ ./k2hdkcdockerimage.sh upload_image -o ubuntu -b <k2hdkc version> --image-version <k2hdkc dbaas trove version> --conf dockerhub-private
 ```

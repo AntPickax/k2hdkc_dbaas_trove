@@ -466,7 +466,7 @@ UpdatePatchFiles()
 			echo '# Using K2HR3 as backend and incorporating it into Trove to provide'
 			echo '# DBaaS functionality. K2HDKC, K2HR3, CHMPX and K2HASH are components'
 			echo '# provided as AntPickax.'
-			echo '# '
+			echo '#'
 			echo '# For the full copyright and license information, please view'
 			echo '# the license file that was distributed with this source code.'
 			echo '#'
@@ -498,8 +498,8 @@ UpdatePatchFiles()
 				#
 				# Set static value
 				#
-				if  ! /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e '/^[[:space:]]*#K2HDKC-START/,/^[[:space:]]*#K2HDKC-END/ s|^\([[:space:]]*TROVE_DATABASE_IMAGE_K2HDKC=\).*$|\1\${TROVE_DATABASE_IMAGE_K2HDKC:-\"docker.io/antpickax/k2hdkc-trove:${CUR_REPO_VERSION}-ubuntu\"}|g' ${_one_patch_file} >/dev/null 2>&1" || \
-					! /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e '/^[[:space:]]*#K2HDKC-START/,/^[[:space:]]*#K2HDKC-END/ s|^\([[:space:]]*TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=\).*$|\1\${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-\"docker.io/antpickax/k2hdkc-trove-backup:${CUR_REPO_VERSION}-ubuntu\"}|g' ${_one_patch_file} >/dev/null 2>&1" || \
+				if  ! /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e '/^[[:space:]]*#K2HDKC-START/,/^[[:space:]]*#K2HDKC-END/ s|^\([[:space:]]*TROVE_DATABASE_IMAGE_K2HDKC=\).*$|\1\${TROVE_DATABASE_IMAGE_K2HDKC:-\"docker.io/antpickax/k2hdkc-trove:${CUR_REPO_VERSION}-alpine\"}|g' ${_one_patch_file} >/dev/null 2>&1" || \
+					! /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e '/^[[:space:]]*#K2HDKC-START/,/^[[:space:]]*#K2HDKC-END/ s|^\([[:space:]]*TROVE_DATABASE_BACKUP_IMAGE_K2HDKC=\).*$|\1\${TROVE_DATABASE_BACKUP_IMAGE_K2HDKC:-\"docker.io/antpickax/k2hdkc-trove-backup:${CUR_REPO_VERSION}-alpine\"}|g' ${_one_patch_file} >/dev/null 2>&1" || \
 					! /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e '/^[[:space:]]*#K2HDKC-START/,/^[[:space:]]*#K2HDKC-END/ s|^\([[:space:]]*TROVE_INSECURE_DOCKER_REGISTRIES=\).*$|\1\${TROVE_INSECURE_DOCKER_REGISTRIES:-\"\"}|g' ${_one_patch_file} >/dev/null 2>&1"; then
 
 					PRNERR "Failed to modify ${_one_patch_file} before creating patch file"
@@ -1124,6 +1124,26 @@ if [ "${RUN_MODE}" = "update" ]; then
 	# Process Update/Create patch files
 	#
 	PRNTITLE "Update/Create patch files"
+
+	if [ ! -f "${SRCTOPDIR}/RELEASE_VERSION" ]; then
+		#
+		# Create RELEASE_VERSION for CUR_REPO_VERSION variable
+		#
+		if [ ! -f "${SCRIPTDIR}/make_release_version_file.sh" ]; then
+			PRNERR "Not found ${SCRIPTDIR}/make_release_version_file.sh file."
+			exit 1
+		fi
+		if ({ /bin/sh -c "${SCRIPTDIR}/make_release_version_file.sh" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to create(update) RELEASE_VERSION file by ${SCRIPTDIR}/make_release_version_file.sh."
+			exit 1
+		fi
+	fi
+	if [ ! -f "${SRCTOPDIR}/RELEASE_VERSION" ]; then
+		PRNERR "Not found ${SRCTOPDIR}/RELEASE_VERSION file."
+		exit 1
+	fi
+	CUR_REPO_VERSION=$(cat "${SRCTOPDIR}/RELEASE_VERSION")
+
 	echo ""
 	echo " Modification directories: ${TROVE_GIT_TOP_DIR}"
 	echo "                           ${TROVE_DASHBOARD_GIT_TOP_DIR}"
@@ -1156,7 +1176,7 @@ if [ "${RUN_MODE}" = "update" ]; then
 
 elif [ "${RUN_MODE}" = "test" ]; then
 	#
-	# Test Update/Create patch files
+	# Test patch files
 	#
 	PRNTITLE "Start testing patches"
 	echo ""
@@ -1293,6 +1313,35 @@ fi
 if [ -z "${K2HDKCSTACK_SH_NESTED}" ]; then
 
 	PRNTITLE "Switch stack user and run ${SCRIPTNAME}"
+
+	#
+	# Setup libvirt network
+	#
+	if [ "${RUN_MODE}" = "start" ]; then
+		PRNMSG "Check and Set libvirt network settings"
+
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-enabled libvirtd >/dev/null 2>&1"; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to enable libvirtd service."
+				exit 1
+			fi
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl start libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to start libvirtd service."
+				exit 1
+			fi
+		fi
+		if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all | grep -v inactive | grep -q default"; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-destroy default" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to destroy default libvirt network by virsh"
+				exit 1
+			fi
+		fi
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-autostart --network default --disable" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to set disable autostart for default libvirt network by virsh"
+			exit 1
+		fi
+		PRNINFO "Succeed to check and set libvirt network settings"
+	fi
 
 	#
 	# Check Current user
