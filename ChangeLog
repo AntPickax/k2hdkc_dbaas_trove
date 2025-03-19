@@ -1,3 +1,14 @@
+k2hdkc-dbaas (1.0.3) unstable; urgency=low
+
+  * Fixed scripts and updated package versions, etc - #7
+  * Removed unnecessary debug code - #6
+  * Updated script files and the version of the k2hdkc package, etc - #5
+  * Changed package update options for fedora compatible OSes - #4
+  * Support kvm_intel check - #3
+  * Updated files to work with the stable/2024.2 branch - #2
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 19 Mar 2025 14:40:34 +0900
+
 k2hdkc-dbaas (1.0.2) unstable; urgency=low
 
   * Corresponds to the stable/2024.1 branch of OpenStack Trove
