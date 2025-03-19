@@ -1,3 +1,9 @@
+k2hdkc-dbaas (1.0.4) unstable; urgency=low
+
+  * Fixed k2hdkcstack.sh for disabling virt default network - #9
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 19 Mar 2025 19:27:29 +0900
+
 k2hdkc-dbaas (1.0.3) unstable; urgency=low
 
   * Fixed scripts and updated package versions, etc - #7
