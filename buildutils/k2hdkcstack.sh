@@ -1315,35 +1315,6 @@ if [ -z "${K2HDKCSTACK_SH_NESTED}" ]; then
 	PRNTITLE "Switch stack user and run ${SCRIPTNAME}"
 
 	#
-	# Setup libvirt network
-	#
-	if [ "${RUN_MODE}" = "start" ]; then
-		PRNMSG "Check and Set libvirt network settings"
-
-		if ! /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-enabled libvirtd >/dev/null 2>&1"; then
-			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-				PRNERR "Failed to enable libvirtd service."
-				exit 1
-			fi
-			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl start libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-				PRNERR "Failed to start libvirtd service."
-				exit 1
-			fi
-		fi
-		if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all | grep -v inactive | grep -q default"; then
-			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-destroy default" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-				PRNERR "Failed to destroy default libvirt network by virsh"
-				exit 1
-			fi
-		fi
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-autostart --network default --disable" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNERR "Failed to set disable autostart for default libvirt network by virsh"
-			exit 1
-		fi
-		PRNINFO "Succeed to check and set libvirt network settings"
-	fi
-
-	#
 	# Check Current user
 	#
 	if [ "${CUR_USER_NAME}" = "${STACK_USER_NAME}" ]; then
@@ -2149,6 +2120,33 @@ if [ "${RUN_MODE}" = "start" ]; then
 	else
 		PRNINFO "Not modify /etc/libvirt/libvirt.conf"
 	fi
+
+	#
+	# [PRE-PROCESSING] Check libvirt daemon and Set libvirt network settings
+	#
+	PRNMSG "Check libvirt daemon and Set libvirt network settings"
+
+	if ! /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-enabled libvirtd >/dev/null 2>&1"; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to enable libvirtd service."
+			exit 1
+		fi
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl start libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to start libvirtd service."
+			exit 1
+		fi
+	fi
+	if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all | grep -v inactive | grep -q default"; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-destroy default" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to destroy default libvirt network by virsh"
+			exit 1
+		fi
+	fi
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-autostart --network default --disable" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNERR "Failed to set disable autostart for default libvirt network by virsh"
+		exit 1
+	fi
+	PRNINFO "Succeed to check libvirt daemon and set libvirt network settings"
 
 	#
 	# [PRE-PROCESSING] Install libvirt for Python 3
