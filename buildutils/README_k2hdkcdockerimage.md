@@ -176,7 +176,7 @@ When executing, first `clone` this repository and switch to the branch or tag yo
 ```
 $ git clone https://github.com/yahoojapan/k2hdkc_dbaas_trove.git
 $ cd k2hdkc_dbaas_trove
-$ git checkout v1.0.2
+$ git checkout <k2hdkc_dbaas_trove release tag: ex) v1.0.2>
 ```
 
 ### cleanup / cleanup-all mode

@@ -37,7 +37,7 @@ index 5756de39..505dbee1 100755
  		OPT_DATASTORE_VERSION="12"
 +	elif [ "$1" = "k2hdkc" ]; then
 +		OPT_DATASTORE="k2hdkc"
-+		OPT_DATASTORE_VERSION="1.0.15"
++		OPT_DATASTORE_VERSION="1.0.16"
  	else
  		usage
  	fi
