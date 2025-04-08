@@ -660,8 +660,8 @@ TestPatchFiles()
 GetLatestK2hdkcImageVersion()
 {
 	if ! K2HDKC_DOCKER_IMAGE_VERSION=$(curl https://hub.docker.com/v2/repositories/antpickax/k2hdkc/tags 2>/dev/null | python -m json.tool | grep '\"name\"' | sed -e 's#^[[:space:]]*"name"[[:space:]]*[:][[:space:]]*##gi' -e 's#"##g' -e 's#,##g' -e 's#[-].*$##g' -e 's#[[space:]]*$##g' | grep -v 'latest' | sort -r | uniq | head -1 | tr -d '\n'); then
-		PRNWARN "Could not get the latest version number of K2HDKC docker image from DockerHub(antpickax/k2hdkc), but use 1.0.15 for fault tolerant."
-		K2HDKC_DOCKER_IMAGE_VERSION="1.0.15"
+		PRNWARN "Could not get the latest version number of K2HDKC docker image from DockerHub(antpickax/k2hdkc), but use 1.0.16 for fault tolerant."
+		K2HDKC_DOCKER_IMAGE_VERSION="1.0.16"
 	fi
 	return 0
 }
@@ -1537,6 +1537,29 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 	fi
 
 	#
+	# Stop libvirtd services and remove packages
+	#
+	# [NOTE]
+	# A simple systemctl stop command will not be enough to stop libvirtd,
+	# so it will loop and wait until it is completely stopped.
+	#
+	PRNMSG "Stop libvirtd services and remove packages"
+
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl stop libvirtd.service virtlogd.service libvirtd-admin.socket libvirtd-ro.socket libvirtd.socket virtlockd.socket virtlogd-admin.socket virtlogd.socket 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNWARN "Failed to stop libvirtd services, but continue..."
+	else
+		sleep 1
+		PRNINFO "Succeed to stop libvirtd services"
+	fi
+
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf remove -y libvirt-daemon libvirt-daemon-log 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNWARN "Failed to remove libvirt-daemon and libvirt-daemon-log packages, but continue..."
+	else
+		sleep 1
+		PRNINFO "Succeed to remove libvirt-daemon and libvirt-daemon-log packages"
+	fi
+
+	#
 	# Check rabbitmq file permission
 	#
 	# [NOTE]
@@ -1666,6 +1689,41 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 			fi
 		done
 	fi
+
+	#
+	# Cleanup /etc/fetab and Umount for swift
+	#
+	PRNMSG "Cleanup /etc/fetab and Umount for swift"
+
+	if /bin/sh -c "${SUDO_PREFIX_CMD} df -k | grep -q '/opt/stack/data/drives/sdb1'"; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} umount /opt/stack/data/drives/sdb1 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to umount /opt/stack/data/drives/sdb1 for swift."
+		else
+			PRNINFO "Succeed to umount /opt/stack/data/drives/sdb1 for swift."
+		fi
+	fi
+	if ! /bin/sh -c "${SUDO_PREFIX_CMD} df -k | grep -q '/opt/stack/data/drives/sdb1'"; then
+		if /bin/sh -c "${SUDO_PREFIX_CMD} cp -p /etc/fstab /etc/fstab.new >/dev/null 2>&1"; then
+			if /bin/sh -c "${SUDO_PREFIX_CMD} grep -v '/opt/stack/data/drives/sdb1' /etc/fstab 2>&1 | ${SUDO_PREFIX_CMD} tee /etc/fstab.new >/dev/null 2>&1"; then
+				if ! /bin/sh -c "${SUDO_PREFIX_CMD} diff /etc/fstab /etc/fstab.new >/dev/null 2>&1"; then
+					if /bin/sh -c "${SUDO_PREFIX_CMD} mv /etc/fstab.new /etc/fstab >/dev/null 2>&1"; then
+						PRNINFO "Succeed to filter /opt/stack/data/drives/sdb1 entry from /etc/fstab."
+					else
+						PRNWARN "Failed to filter /opt/stack/data/drives/sdb1 entry from /etc/fstab."
+					fi
+				else
+					PRNINFO "fstab does not have /opt/stack/data/drives/sdb1 entry, nothing to do."
+				fi
+			else
+				PRNWARN "Failed to filter /etc/fstab file."
+			fi
+		else
+			PRNWARN "Failed to copy /etc/fstab backup"
+		fi
+	else
+		PRNWARN "Could not umount /opt/stack/data/drives/sdb1 for swift"
+	fi
+	PRNINFO "Finished to cleanup /etc/fetab and umount for swift"
 
 	PRNSUCCESS "Stopped and Cleanup ${DEVSTACK_NAME}"
 fi
@@ -2055,7 +2113,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	# [PRE-PROCESSING] Install libvirt daemon
 	#
-	PRNMSG "[PRE-PROCESSING] Check and Install libvirt daemon"
+	PRNMSG "[PRE-PROCESSING] Install libvirt daemon"
 
 	if ! dnf list installed | grep -q '^libvirt-daemon\.'; then
 		#
@@ -2070,7 +2128,20 @@ if [ "${RUN_MODE}" = "start" ]; then
 			PRNERR "Failed to install libvirt daemon package."
 			exit 1
 		fi
-		PRNINFO "Installed libvirt daemon."
+		PRNINFO "Succeed to installed libvirt daemon."
+
+		#
+		# Set libvirtd.service to enable
+		#
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-enabled libvirtd >/dev/null 2>&1"; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to enable libvirtd service."
+				exit 1
+			fi
+			PRNINFO "Succeed to enable libvirtd service."
+		else
+			PRNINFO "Already enable libvirtd service."
+		fi
 	else
 		PRNINFO "Already installed libvirt daemon."
 	fi
@@ -2107,14 +2178,14 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Modify /etc/libvirt/libvirt.conf"
 
-	if [ -f /etc/libvirt/libvirt.conf ] && ! grep -q 'unix_sock_group' /etc/libvirt/libvirt.conf; then
+	if /bin/sh -c "${SUDO_PREFIX_CMD} stat /etc/libvirt/libvirt.conf >/dev/null 2>&1" && ! /bin/sh -c "${SUDO_PREFIX_CMD} grep -q 'unix_sock_group' /etc/libvirt/libvirt.conf"; then
 		{
 			echo ''
 			echo 'unix_sock_group = "libvirt"'
 			echo 'unix_sock_ro_perms = "0777"'
 			echo 'unix_sock_rw_perms = "0770"'
 			echo ''
-		} >> /etc/libvirt/libvirt.conf
+		} | /bin/sh -c "${SUDO_PREFIX_CMD} tee -a /etc/libvirt/libvirt.conf" >/dev/null
 
 		PRNINFO "Modified /etc/libvirt/libvirt.conf"
 	else
@@ -2122,31 +2193,50 @@ if [ "${RUN_MODE}" = "start" ]; then
 	fi
 
 	#
-	# [PRE-PROCESSING] Check libvirt daemon and Set libvirt network settings
+	# [PRE-PROCESSING] Install libvirt daemon and Setting
 	#
-	PRNMSG "Check libvirt daemon and Set libvirt network settings"
+	PRNMSG "[PRE-PROCESSING] Check and Install libvirt daemon and Setting"
 
-	if ! /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-enabled libvirtd >/dev/null 2>&1"; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNERR "Failed to enable libvirtd service."
-			exit 1
-		fi
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl start libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNERR "Failed to start libvirtd service."
-			exit 1
-		fi
+	#
+	# Check and Run libvirtd.service
+	#
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl is-active libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNINFO "libvirtd service is not running, so start it."
+		_TMP_LIBVIRT_START_OPT="start"
+	else
+		PRNINFO "Already running libvirtd service, so restart it."
+		_TMP_LIBVIRT_START_OPT="restart"
 	fi
-	if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all | grep -v inactive | grep -q default"; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-destroy default" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNERR "Failed to destroy default libvirt network by virsh"
-			exit 1
-		fi
-	fi
-	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-autostart --network default --disable" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-		PRNERR "Failed to set disable autostart for default libvirt network by virsh"
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl ${_TMP_LIBVIRT_START_OPT} libvirtd" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNERR "Failed to start libvirtd service."
 		exit 1
 	fi
-	PRNINFO "Succeed to check libvirt daemon and set libvirt network settings"
+	PRNINFO "Succeed to ${_TMP_LIBVIRT_START_OPT} libvirtd services."
+
+	#
+	# [PRE-PROCESSING] Destroy default libvirt network
+	#
+	PRNMSG "[PRE-PROCESSING] Destroy default libvirt network"
+
+	if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all 2>/dev/null | grep -v inactive | grep -q default"; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-destroy default" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to destroy default libvirt network by virsh"
+		else
+			PRNINFO "Succeed to destroy default libvirt network by virsh"
+		fi
+	else
+		PRNINFO "Already destroy default libvirt network"
+	fi
+	if /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-list --all 2>/dev/null | grep default | awk '{print $3}' | grep -q -i 'yes'"; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} virsh net-autostart --network default --disable" 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to set disable autostart for default libvirt network by virsh"
+		else
+			PRNINFO "Succeed to set disable autostart for default libvirt network by virsh"
+		fi
+	else
+		PRNINFO "Already disable autostart for default libvirt network"
+	fi
+	PRNINFO "Succeed to destroy default libvirt network"
 
 	#
 	# [PRE-PROCESSING] Install libvirt for Python 3

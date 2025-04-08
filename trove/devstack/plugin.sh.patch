@@ -91,7 +91,7 @@ index 0a07e992..a94fce61 100644
 +    echo "Register the image in datastore for k2hdkc"
 +
 +    TROVE_DATASTORE_TYPE_K2HDKC="k2hdkc"
-+    TROVE_DATASTORE_VERSION_K2HDKC="1.0.15"
++    TROVE_DATASTORE_VERSION_K2HDKC="1.0.16"
 +
 +    $TROVE_MANAGE datastore_update ${TROVE_DATASTORE_TYPE_K2HDKC} ""
 +    $TROVE_MANAGE datastore_version_update ${TROVE_DATASTORE_TYPE_K2HDKC} ${TROVE_DATASTORE_VERSION_K2HDKC} ${TROVE_DATASTORE_TYPE_K2HDKC} ${glance_image_id} ${TROVE_DATASTORE_TYPE_K2HDKC} 1 --image-tags trove,k2hdkc
