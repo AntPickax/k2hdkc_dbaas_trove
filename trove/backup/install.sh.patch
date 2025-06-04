@@ -18,7 +18,7 @@
 #
 
 diff --git a/backup/install.sh b/backup/install.sh
-index 5756de39..505dbee1 100755
+index 5756de39..97a85acf 100755
 --- a/backup/install.sh
 +++ b/backup/install.sh
 @@ -3,8 +3,7 @@ set -e

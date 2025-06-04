@@ -101,11 +101,6 @@ ETC_TROVE_CONF_FILE="${ETC_TROVE_DIR}/trove.conf"
 ETC_TROVE_GUEST_CONF_FILE="${ETC_TROVE_DIR}/trove-guestagent.conf"
 
 #
-# Other Variables
-#
-PYTHON_K2HR3CLIENT_DIR_NAME="python-k2hr3client"
-
-#
 # Variables about Pathes
 #
 TROVE_PATCH_DIR_NAME="${TROVE_GIT_NAME}"
@@ -196,6 +191,7 @@ if [ ! -f "${SCRIPTDIR}/${COMMON_UTILS_FUNC_FILE}" ]; then
 	PRNERR "Not found ${SCRIPTDIR}/${COMMON_UTILS_FUNC_FILE} file is not found."
 	exit 1
 fi
+# shellcheck disable=SC1090
 . "${SCRIPTDIR}/${COMMON_UTILS_FUNC_FILE}"
 
 #
@@ -205,6 +201,7 @@ if [ ! -f "${SRCTOPDIR}/${DEFAULT_DEVSTACK_BRANCH_FILE}" ]; then
 	PRNERR "Not found ${SRCTOPDIR}/${DEFAULT_DEVSTACK_BRANCH_FILE} file is not found."
 	exit 1
 fi
+# shellcheck disable=SC1090
 . "${SRCTOPDIR}/${DEFAULT_DEVSTACK_BRANCH_FILE}"
 
 #--------------------------------------------------------------
@@ -1552,13 +1549,6 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 		PRNINFO "Succeed to stop libvirtd services"
 	fi
 
-	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf remove -y libvirt-daemon libvirt-daemon-log 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-		PRNWARN "Failed to remove libvirt-daemon and libvirt-daemon-log packages, but continue..."
-	else
-		sleep 1
-		PRNINFO "Succeed to remove libvirt-daemon and libvirt-daemon-log packages"
-	fi
-
 	#
 	# Check rabbitmq file permission
 	#
@@ -1725,6 +1715,9 @@ if [ "${RUN_MODE}" = "clean" ] || [ "${CUR_RUN_DEVSTACK}" -eq 1 ]; then
 	fi
 	PRNINFO "Finished to cleanup /etc/fetab and umount for swift"
 
+	#
+	# Messages
+	#
 	PRNSUCCESS "Stopped and Cleanup ${DEVSTACK_NAME}"
 fi
 
@@ -1755,13 +1748,31 @@ if [ "${RUN_MODE}" = "start" ]; then
 	PRNMSG "[PRE-PROCESSING] Check nest kvm_amd"
 
 	_KVM_AMD_NEST=$(cat /sys/module/kvm_amd/parameters/nested 2>/dev/null)
-	_KVM_ITL_NEST=$(cat /sys/module/kvm_intel/parameters/nested 2>/dev/null)
-	if [ -n "${_KVM_AMD_NEST}" ] && [ "${_KVM_AMD_NEST}" -eq 1 ]; then
+	_KVM_INTEL_NEST=$(cat /sys/module/kvm_intel/parameters/nested 2>/dev/null)
+	if [ -n "${_KVM_AMD_NEST}" ] && { [ "${_KVM_AMD_NEST}" = "Y" ] || [ "${_KVM_AMD_NEST}" = "1" ]; }; then
 		PRNINFO "Already set nest kvm_amd driver."
-	elif [ -n "${_KVM_ITL_NEST}" ] && [ "${_KVM_ITL_NEST}" = "Y" ]; then
+
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} /bin/sh -c \"/usr/sbin/modprobe -r kvm_amd >/dev/null 2>&1\""; then
+			PRNERR "Failed to run \"/usr/sbin/modprobe -r kvm_amd\""
+			exit 1
+		fi
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} /bin/sh -c \"/usr/sbin/modprobe kvm_amd nested=1 >/dev/null 2>&1\""; then
+			PRNERR "Failed to run \"/usr/sbin/modprobe kvm_amd nested=1\""
+			exit 1
+		fi
+	elif [ -n "${_KVM_INTEL_NEST}" ] && { [ "${_KVM_INTEL_NEST}" = "Y" ] || [ "${_KVM_INTEL_NEST}" = "1" ]; }; then
 		PRNINFO "Already set nest kvm_intel driver."
+
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} /bin/sh -c \"/usr/sbin/modprobe -r kvm_intel >/dev/null 2>&1\""; then
+			PRNERR "Failed to run \"/usr/sbin/modprobe -r kvm_intel\""
+			exit 1
+		fi
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} /bin/sh -c \"/usr/sbin/modprobe kvm_intel nested=1 >/dev/null 2>&1\""; then
+			PRNERR "Failed to run \"/usr/sbin/modprobe kvm_intel nested=1\""
+			exit 1
+		fi
 	else
-		PRNWARN "Not set kvm_amd driver nest, so set it."
+		PRNWARN "Not set kvm_amd/kvm_intel driver nest, so set kvm_amd."
 
 		if ! /bin/sh -c "${SUDO_PREFIX_CMD} /bin/sh -c \"echo '1' > /sys/module/kvm_amd/parameters/nested\""; then
 			PRNERR "Failed to set 1 to /sys/module/kvm_amd/parameters/nested."

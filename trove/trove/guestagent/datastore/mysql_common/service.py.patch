@@ -18,7 +18,7 @@
 #
 
 diff --git a/trove/guestagent/datastore/mysql_common/service.py b/trove/guestagent/datastore/mysql_common/service.py
-index d875f61b..4e9521bd 100644
+index b1d11051..f25b6a24 100644
 --- a/trove/guestagent/datastore/mysql_common/service.py
 +++ b/trove/guestagent/datastore/mysql_common/service.py
 @@ -623,6 +623,10 @@ class BaseMySqlApp(service.BaseDbApp):

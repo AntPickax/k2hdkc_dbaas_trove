@@ -26,7 +26,7 @@
 # overridden by options in those scripts.
 #==============================================================
 
-DEVSTACK_BRANCH="stable/2024.2"
+DEVSTACK_BRANCH="stable/2025.1"
 
 #
 # Local variables:
