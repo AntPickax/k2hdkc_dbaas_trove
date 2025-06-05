@@ -18,10 +18,10 @@
 #
 
 diff --git a/trove/common/template.py b/trove/common/template.py
-index 034e3c1a..5589e16a 100644
+index f858113f..58d5d8ae 100644
 --- a/trove/common/template.py
 +++ b/trove/common/template.py
-@@ -38,6 +38,7 @@ SERVICE_PARSERS = {
+@@ -40,6 +40,7 @@ SERVICE_PARSERS = {
      'redis': configurations.RedisConfParser,
      'vertica': configurations.VerticaConfParser,
      'db2': configurations.DB2ConfParser,

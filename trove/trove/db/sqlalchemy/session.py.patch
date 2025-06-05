@@ -18,21 +18,21 @@
 #
 
 diff --git a/trove/db/sqlalchemy/session.py b/trove/db/sqlalchemy/session.py
-index 3a833705..472bda65 100644
+index 93b764ec..13e7966e 100644
 --- a/trove/db/sqlalchemy/session.py
 +++ b/trove/db/sqlalchemy/session.py
-@@ -43,6 +43,7 @@ def configure_db(options, models_mapper=None):
+@@ -43,6 +43,7 @@ def configure_db(models_mapper=None):
          from trove.dns import models as dns_models
-         from trove.extensions.mysql import models as mysql_models
+         from trove.extensions.common import models as common_models
          from trove.extensions.security_group import models as secgrp_models
 +        from trove.extensions.k2hdkc import models as k2hdkc_models
          from trove.guestagent import models as agent_models
          from trove.instance import models as base_models
          from trove.module import models as module_models
-@@ -53,6 +54,7 @@ def configure_db(options, models_mapper=None):
+@@ -53,6 +54,7 @@ def configure_db(models_mapper=None):
              datastores_models,
              dns_models,
-             mysql_models,
+             common_models,
 +            k2hdkc_models,
              agent_models,
              quota_models,

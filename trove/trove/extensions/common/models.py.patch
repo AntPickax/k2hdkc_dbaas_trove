@@ -18,24 +18,24 @@
 #
 
 diff --git a/trove/extensions/common/models.py b/trove/extensions/common/models.py
-index 0ea791d0..70671f3c 100644
+index f619c89f..336c94d2 100644
 --- a/trove/extensions/common/models.py
 +++ b/trove/extensions/common/models.py
-@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
+@@ -32,7 +32,7 @@ CONF = cfg.CONF
  
  
  def load_and_verify(context, instance_id,
--                    enabled_datastore=['mysql', 'mariadb']):
-+                    enabled_datastore=['mysql', 'mariadb', 'k2hdkc']):
+-                    enabled_datastore=['mysql', 'mariadb', 'postgresql']):
++                    enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc']):
      """Check instance datastore.
  
      Some API operations are only supported for some specific datastores.
-@@ -54,7 +54,20 @@ class Root(object):
+@@ -59,7 +59,20 @@ class Root(object):
      @classmethod
      def load(cls, context, instance_id):
          load_and_verify(context, instance_id,
 -                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
-+                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
++                        enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
 +
 +        # TODO(pdmars): remove the is_root_enabled call from the guest agent,
 +        # just check the database for this information.
@@ -52,21 +52,21 @@ index 0ea791d0..70671f3c 100644
          # TODO(pdmars): remove the is_root_enabled call from the guest agent,
          # just check the database for this information.
          # If the root history returns null or raises an exception, the root
-@@ -71,7 +84,7 @@ class Root(object):
+@@ -76,7 +89,7 @@ class Root(object):
      def create(cls, context, instance_id, root_password,
                 cluster_instances_list=None):
          load_and_verify(context, instance_id,
 -                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
-+                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
++                        enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
          if root_password:
              root = create_guest_client(context,
                                         instance_id).enable_root_with_password(
-@@ -93,7 +106,7 @@ class Root(object):
+@@ -98,7 +111,7 @@ class Root(object):
      @classmethod
      def delete(cls, context, instance_id):
          load_and_verify(context, instance_id,
 -                        enabled_datastore=['mysql', 'mariadb', 'postgresql'])
-+                       enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
++                        enabled_datastore=['mysql', 'mariadb', 'postgresql', 'k2hdkc'])
          create_guest_client(context, instance_id).disable_root()
  
  

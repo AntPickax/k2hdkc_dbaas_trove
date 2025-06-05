@@ -18,10 +18,10 @@
 #
 
 diff --git a/trove/common/cfg.py b/trove/common/cfg.py
-index 31795dbc..1f6a22c1 100644
+index b03255a4..22262c3b 100644
 --- a/trove/common/cfg.py
 +++ b/trove/common/cfg.py
-@@ -422,7 +422,8 @@ common_opts = [
+@@ -423,7 +423,8 @@ common_opts = [
                           'couchdb': 'f0a9ab7b-66f7-4352-93d7-071521d44c7c',
                           'vertica': 'a8d805ae-a3b2-c4fd-gb23-b62cee5201ae',
                           'db2': 'e040cd37-263d-4869-aaa6-c62aa97523b5',
@@ -31,7 +31,7 @@ index 31795dbc..1f6a22c1 100644
                  help='Unique ID to tag notification events.'),
      cfg.StrOpt('network_label_regex', default='^private$',
                 help='Regular expression to match Trove network labels.',
-@@ -452,6 +453,8 @@ common_opts = [
+@@ -453,6 +454,8 @@ common_opts = [
                 help='The guest info filename found in the injected config '
                      'location.  If a full path is specified then it will '
                      'be used as the path to the guest info file'),
@@ -40,7 +40,7 @@ index 31795dbc..1f6a22c1 100644
      cfg.DictOpt('datastore_registry_ext', default=dict(),
                  help='Extension for default datastore managers. '
                       'Allows the use of custom managers for each of '
-@@ -620,6 +623,11 @@ mysql_opts = [
+@@ -630,6 +633,11 @@ mysql_opts = [
               'your-registry/your-repo/db-backup-mysql:5.7 is used for mysql'
               'datastore with version 5.7'
      ),
@@ -52,9 +52,9 @@ index 31795dbc..1f6a22c1 100644
  ]
  
  # Percona
-@@ -1163,7 +1171,12 @@ postgresql_opts = [
-                deprecated_reason='Will be replaced by configuration group '
-                                  'option: log_min_duration_statement'),
+@@ -856,7 +864,12 @@ redis_opts = [
+     cfg.StrOpt('guest_log_exposed_logs', default='',
+                help='List of Guest Logs to expose for publishing.'),
      cfg.IntOpt('default_password_length', default=36,
 -               help='Character length of generated passwords.')
 +               help='Character length of generated passwords.'),
@@ -65,8 +65,8 @@ index 31795dbc..1f6a22c1 100644
 +    ),
  ]
  
- # Apache CouchDB
-@@ -1445,6 +1458,105 @@ mariadb_opts = [
+ # Cassandra
+@@ -1455,6 +1468,105 @@ mariadb_opts = [
               'your-registry/your-repo/db-backup-mariadb:10.3 is used for '
               'mariadb datastore with version 10.3'
      ),
@@ -172,7 +172,7 @@ index 31795dbc..1f6a22c1 100644
  ]
  
  # RPC version groups
-@@ -1573,6 +1685,7 @@ CONF.register_group(mariadb_group)
+@@ -1583,6 +1695,7 @@ CONF.register_group(mariadb_group)
  CONF.register_group(network_group)
  CONF.register_group(service_credentials_group)
  CONF.register_group(guest_agent_group)
@@ -180,7 +180,7 @@ index 31795dbc..1f6a22c1 100644
  
  CONF.register_opts(mysql_opts, mysql_group)
  CONF.register_opts(percona_opts, percona_group)
-@@ -1589,6 +1702,7 @@ CONF.register_opts(mariadb_opts, mariadb_group)
+@@ -1599,6 +1712,7 @@ CONF.register_opts(mariadb_opts, mariadb_group)
  CONF.register_opts(network_opts, network_group)
  CONF.register_opts(service_credentials_opts, service_credentials_group)
  CONF.register_opts(guest_agent_opts, guest_agent_group)

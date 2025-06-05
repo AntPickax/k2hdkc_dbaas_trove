@@ -937,21 +937,73 @@ fi
 PRNINFO "Succeed to check and clear existed OpenStack resources"
 
 #----------------------------------------------------------
+# Check free size of disk and memory
+#----------------------------------------------------------
+# [NOTE]
+# Immediately after starting devstack, there are cases where
+# the hypervisor(nova) recognizes that the free memory and disk
+# space are zero(0).
+# If this is detected, this script restarts the libvirtd and
+# devstack@ services up to 10 times.
+# Restarting these services will allow the hypervisor(nova) to
+# correctly recognize the free memory and disk space.
+#
+PRNMSG "Check free size of disk and memory"
+
+_CHECK_NOVA_TRYCOUNT=10
+
+while [ "${_CHECK_NOVA_TRYCOUNT}" -gt 0 ]; do
+	#
+	# Get hypervisor stats(free disk and memory)
+	#
+	echo "    Currently hypervisor stats"
+	openstack hypervisor stats show 2>/dev/null | sed -e 's|^|        |g'
+	echo ""
+
+	_FREE_MEM_SIZE=$(openstack hypervisor stats show -f shell 2>/dev/null | grep 'free_ram_mb' | sed -e 's#free_ram_mb=##g' -e 's#"##g')
+	_FREE_DISK_SIZE=$(openstack hypervisor stats show -f shell 2>/dev/null | grep 'free_disk_gb' | sed -e 's#free_disk_gb=##g' -e 's#"##g')
+	if [ -n "${_FREE_MEM_SIZE}" ] && [ -n "${_FREE_DISK_SIZE}" ] && [ "${_FREE_MEM_SIZE}" -gt 0 ] && [ "${_FREE_DISK_SIZE}" -gt 0 ]; then
+		# OK
+		break;
+	fi
+
+	echo ""
+	echo "    ${CYEL}This is reporting insufficient free memory and disk space(0) by libvirt.${CDEF}"
+	echo ""
+
+	PRNWARN "The hypervisor has no free memory or disk space, so try to restart libvirt and devstack services."
+	echo ""
+	echo "    If you want to stop this retry process, type ${CRED}Cntrl-C${CDEF} to stop the script."
+	echo "    This script will retry up to ${CRED}10 times${CDEF}."
+	echo ""
+
+	PRNINFO "Try to restart libvirt.service"
+	if ({ sudo systemctl restart libvirtd.service 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNERR "Failed to restart libvirtd.service, but continue..."
+	fi
+	sleep 30
+
+	PRNINFO "Try to restart all devstack@ services"
+	if ({ sudo systemctl restart devstack@* 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNERR "Failed to restart all devstack@ services, but continue..."
+	fi
+	sleep 30
+	echo ""
+
+	_CHECK_NOVA_TRYCOUNT=$((_CHECK_NOVA_TRYCOUNT - 1))
+done
+
+if [ "${_CHECK_NOVA_TRYCOUNT}" -le 0 ]; then
+	PRNERR "Restarted the libvirt and devstack services 10 times to get the hypervisor to recognize the free memory or disk space correctly, but to no avail."
+	exit 1
+fi
+
+PRNINFO "Succeed to free size of disk and memory"
+
+#----------------------------------------------------------
 # Create related OpenStack resources
 #----------------------------------------------------------
 PRNMSG "Create related OpenStack resources"
-
-#
-# Check free size of disk and memory
-#
-_FREE_MEM_SIZE=$(openstack hypervisor stats show -f shell 2>/dev/null | grep 'free_ram_mb' | sed -e 's#free_ram_mb=##g' -e 's#"##g')
-_FREE_DISK_SIZE=$(openstack hypervisor stats show -f shell 2>/dev/null | grep 'free_disk_gb' | sed -e 's#free_disk_gb=##g' -e 's#"##g')
-
-if [ -z "${_FREE_MEM_SIZE}" ] || [ -z "${_FREE_DISK_SIZE}" ] || [ "${_FREE_MEM_SIZE}" -le 0 ] || [ "${_FREE_DISK_SIZE}" -le 0 ]; then
-	PRNERR "The hypervisor has no free memory or disk space."
-	openstack hypervisor stats show 2>/dev/null | sed -e 's|^|        |g'
-	exit 1
-fi
 
 #
 # Get Flavor ID ( = 'ds1G' )

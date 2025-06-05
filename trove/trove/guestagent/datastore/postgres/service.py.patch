@@ -18,7 +18,7 @@
 #
 
 diff --git a/trove/guestagent/datastore/postgres/service.py b/trove/guestagent/datastore/postgres/service.py
-index 52e7ae4a..a5898da8 100644
+index 9628b732..0a0c03b0 100644
 --- a/trove/guestagent/datastore/postgres/service.py
 +++ b/trove/guestagent/datastore/postgres/service.py
 @@ -209,6 +209,10 @@ class PgSqlApp(service.BaseDbApp):
