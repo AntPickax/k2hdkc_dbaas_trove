@@ -1,3 +1,9 @@
+k2hdkc-dbaas (1.0.6) unstable; urgency=low
+
+  * Updated for compatibility with trove stable/2025.1 - #13
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Thu, 05 Jun 2025 10:58:20 +0900
+
 k2hdkc-dbaas (1.0.5) unstable; urgency=low
 
   * Updated k2hdkc version and k2hdkcstack.sh and k2hr3setup.sh scripts - #11
