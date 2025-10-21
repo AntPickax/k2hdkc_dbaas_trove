@@ -18,7 +18,7 @@
 #
 
 diff --git a/trove_dashboard/api/trove.py b/trove_dashboard/api/trove.py
-index d3a0561..14d99db 100644
+index 80c8773..e4cbb23 100644
 --- a/trove_dashboard/api/trove.py
 +++ b/trove_dashboard/api/trove.py
 @@ -23,6 +23,18 @@ from openstack_dashboard.api import base
@@ -48,30 +48,18 @@ index d3a0561..14d99db 100644
  
  
  @memoized
-@@ -69,7 +82,8 @@ def cluster_delete(request, cluster_id):
- 
- def cluster_create(request, name, volume, flavor, num_instances,
+@@ -71,6 +84,7 @@ def cluster_create(request, name, volume, flavor, num_instances,
                     datastore, datastore_version,
--                   nics=None, root_password=None, locality=None):
-+                   nics=None, root_password=None, locality=None,
-+                   configuration=None):
+                    nics=None, root_password=None, locality=None,
+                    configuration=None):
++
      instances = []
      for i in range(num_instances):
          instance = {}
-@@ -86,7 +100,8 @@ def cluster_create(request, name, volume, flavor, num_instances,
-         datastore,
-         datastore_version,
-         instances=instances,
--        locality=locality)
-+        locality=locality,
-+        configuration=configuration)
- 
- 
- def cluster_grow(request, cluster_id, new_instances):
-@@ -456,8 +471,256 @@ def configuration_instances(request, group_id):
+@@ -458,8 +472,256 @@ def configuration_instances(request, group_id):
      return troveclient(request).configurations.instances(group_id)
- 
- 
+
+
 +def _get_extdata_url(request, values, k2hr3_url, k2hr3_url_from_private_network):
 +    try:
 +        k2hr3_token = K2hr3Token(request.user.project_name, request.user.token.id)

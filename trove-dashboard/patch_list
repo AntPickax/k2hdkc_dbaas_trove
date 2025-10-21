@@ -34,7 +34,6 @@ trove_dashboard/content/database_clusters/forms.py
 trove_dashboard/content/databases/db_capability.py
 trove_dashboard/content/databases/templates/databases/_launch_network_help.html
 trove_dashboard/content/databases/workflows/create_instance.py
-trove_dashboard/enabled/_1740_project_database_clusters_panel.py
 
 #
 # Local variables:

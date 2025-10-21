@@ -411,6 +411,31 @@ fi
 PRNTITLE "Start K2HR3 Cluster for K2HDKC DBaaS Trove"
 
 #----------------------------------------------------------
+# Check and Setup PATH for openstack command
+#----------------------------------------------------------
+PRNMSG "Check and Setup PATH for openstack command"
+
+if ! command -v openstack >/dev/null 2>&1; then
+	if echo "${PATH}" | grep -q -e '/usr/local/bin$' -e '/usr/local/bin/$' -e '/usr/local/bin/:' -e '/usr/local/bin:'; then
+		PRNERR "The PATH environment variable includes /usr/local/bin, but the openstack command was not found."
+		exit 1
+	fi
+	if [ ! -f /usr/local/bin/openstack ]; then
+		PRNERR "The openstack command (in /usr/loca/bin directory) cannot be found."
+		exit 1
+	fi
+	#
+	# Add /usr/local/bin path to PATH environment
+	#
+	PATH="/usr/local/bin:${PATH}"
+	export PATH
+
+	PRNINFO "Added /usr/local/bin path to PATH environment."
+else
+	PRNINFO "The openstack command was found using the current PATH environment variable, so no changes were required."
+fi
+
+#----------------------------------------------------------
 # Check and Create work directory
 #----------------------------------------------------------
 PRNMSG "Check and Create work directory"
@@ -668,7 +693,7 @@ PRNINFO "Succeed to check python(${PYBIN})."
 #
 PRNMSG "Decision Hostname and IP address"
 
-TYPE_NAME_PARENT_HOSTNAME=$(hostname)
+TYPE_NAME_PARENT_HOSTNAME=$(hostname -f)
 TYPE_NAME_PARENT_IP=
 if [ -z "${TYPE_NAME_PARENT_HOSTNAME}" ]; then
 	PRNINFO "Could not get local hostname."

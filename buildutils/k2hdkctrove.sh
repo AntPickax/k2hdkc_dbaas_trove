@@ -925,7 +925,7 @@ UnregisterNode()
 #
 # Signal Handler
 #
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 SigHandle()
 {
 	CAUGHT_SIGNAL=1

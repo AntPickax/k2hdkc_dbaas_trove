@@ -37,7 +37,7 @@ SRCTOPDIRNAME=$(basename "${SRCTOPDIR}")
 #
 # Variable about local host
 #
-MYHOSTNAME=$(hostname)
+MYHOSTNAME=$(hostname -f)
 
 ROOT_USER_NAME="root"
 STACK_USER_NAME="stack"
@@ -1245,6 +1245,17 @@ else
 		fi
 
 		#
+		# Set umask for stackuser
+		#
+		if [ -f "${STACK_USER_HOME}/.bashrc" ] && ! grep umask ~stack/.bashrc | grep -q 022; then
+			PRNMSG "Set umask to ${STACK_USER_NAME} user."
+			(
+				echo "# Force to set umask 022"
+				echo "umask 022"
+			) | /bin/sh -c "${SUDO_PREFIX_CMD} tee ${STACK_USER_HOME}/.bashrc" >/dev/null
+		fi
+
+		#
 		# Check sudoers file
 		#
 		_NEED_CREATE_SUDOERS=0
@@ -1302,6 +1313,65 @@ else
 
 		PRNSUCCESS "Setup stack user"
 	fi
+
+	#
+	# Check and Setup root user
+	#
+	PRNTITLE "Check and Setup root user"
+
+	#
+	# Check and Setup adm user/group
+	#
+	if ! getent group adm >/dev/null 2>&1; then
+		PRNMSG "Setup adm group"
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} groupadd adm" >/dev/null 2>&1; then
+			PRNERR "Failed to add adm group."
+			exit 1
+		fi
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} gpasswd -a root adm" >/dev/null 2>&1; then
+			PRNERR "Failed to add root to adm group member."
+			exit 1
+		fi
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} gpasswd -a daemon adm" >/dev/null 2>&1; then
+			PRNERR "Failed to add daemon to adm group member."
+			exit 1
+		fi
+		PRNINFO "Succeed to add adm group."
+	fi
+
+	if ! getent passwd adm >/dev/null 2>&1; then
+		PRNMSG "Setup adm user"
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} sudo useradd -g adm -G sys -c adm -d /var/adm -s /sbin/nologin adm" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to add adm user."
+			exit 1
+		fi
+		PRNINFO "Succeed to add adm user."
+	fi
+
+	if ! getent group adm | awk -F':' '{print $4}' | grep -q adm; then
+		PRNMSG "Add adm user to adm group"
+		if ! /bin/sh -c "${SUDO_PREFIX_CMD} gpasswd -a adm adm" >/dev/null 2>&1; then
+			PRNERR "Failed to add adm user to adm group."
+			exit 1
+		fi
+		PRNINFO "Succeed to add adm user to adm group."
+	fi
+
+	#
+	# Check and modify umask in root profile files
+	#
+	# [NOTE]
+	# Requires 0022 or higher authorization.
+	#
+	PRNMSG "Check and modify umask value for root profile"
+	_TMP_HAS_UMASK_PROFILE_FILES=$(/bin/sh -c "${SUDO_PREFIX_CMD} grep -v '^#' /etc/profile /etc/profile.d/*" | grep umask | awk -F':' '{print $1}')
+	for _one_profile_file in ${_TMP_HAS_UMASK_PROFILE_FILES}; do
+		if /bin/sh -c "${SUDO_PREFIX_CMD} sed -i -e 's|umask|#umask|g' ${_one_profile_file}" >/dev/null 2>&1; then
+			PRNWARN "Failed to comment out the umask setting in ${_one_profile_file}. This may cause problems later."
+		else
+			PRNINFO "Succeed to comment out the umask setting in ${_one_profile_file}."
+		fi
+	done
 fi
 
 #==============================================================
@@ -1910,7 +1980,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	# Setup and Enables RabbitMQ repository
 	#
-	if ! dnf repolist | grep -q rabbitmq-38; then
+	if ! dnf repolist 2>/dev/null | grep -q rabbitmq-38; then
 		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y centos-release-rabbitmq-38 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
 			PRNERR "Failed to install centos-release-rabbitmq-38."
 			exit 1
@@ -1921,7 +1991,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	# Setup and Enables OpenStack RDO repository
 	#
-	if ! dnf repolist | grep -q openstack-caracal; then
+	if ! dnf repolist 2>/dev/null | grep -q openstack-caracal; then
 		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y centos-release-openstack-caracal 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
 			PRNERR "Failed to install centos-release-openstack-caracal."
 			exit 1
@@ -1932,53 +2002,56 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	# Setup and Enables Rocky CRB repository
 	#
-	if ! dnf repolist | grep -q rocky-crb; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-enabled rocky-crb 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNERR "Failed to enable rocky-crb repository."
-			exit 1
+	if dnf repolist all 2>/dev/null | grep -q rocky-crb; then
+		if ! dnf repolist 2>/dev/null | grep -q rocky-crb; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-enabled rocky-crb 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNERR "Failed to enable rocky-crb repository."
+				exit 1
+			fi
+			PRNINFO "Succeed to enable rocky-crb repository."
 		fi
-		PRNINFO "Succeed to enable rocky-crb repository."
 	fi
 
 	#
 	# Disable repositories : appstream, vaseos, crb, epel, mariadb-*
 	#
-	if dnf repolist | grep -q '^appstream'; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled appstream 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNWARN "Failed to disable appstream repos"
-		else
-			PRNINFO "Succeed to disable appstream repos"
+	if dnf repolist all 2>/dev/null | grep -q '^rocky-appstream'; then
+		if dnf repolist 2>/dev/null | grep -q '^appstream'; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled appstream 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNWARN "Failed to disable appstream repos"
+			else
+				PRNINFO "Succeed to disable appstream repos"
+			fi
 		fi
 	fi
-	if dnf repolist | grep -q '^baseos'; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled baseos 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNWARN "Failed to disable baseos repos"
-		else
-			PRNINFO "Succeed to disable baseos repos"
+	if dnf repolist all 2>/dev/null | grep -q '^rocky-baseos'; then
+		if dnf repolist 2>/dev/null | grep -q '^baseos'; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled baseos 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNWARN "Failed to disable baseos repos"
+			else
+				PRNINFO "Succeed to disable baseos repos"
+			fi
 		fi
 	fi
-	if dnf repolist | grep -q '^crb'; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled crb 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNWARN "Failed to disable crb repos"
-		else
-			PRNINFO "Succeed to disable crb repos"
+	if dnf repolist all 2>/dev/null | grep -q '^rocky-crb'; then
+		if dnf repolist 2>/dev/null | grep -q '^crb'; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled crb 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNWARN "Failed to disable crb repos"
+			else
+				PRNINFO "Succeed to disable crb repos"
+			fi
 		fi
 	fi
-	if dnf repolist | grep -q '^extras'; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled extras 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNWARN "Failed to disable extras repos"
-		else
-			PRNINFO "Succeed to disable extras repos"
+	if dnf repolist all 2>/dev/null | grep -q '^rocky-extras'; then
+		if dnf repolist 2>/dev/null | grep -q '^extras'; then
+			if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled extras 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+				PRNWARN "Failed to disable extras repos"
+			else
+				PRNINFO "Succeed to disable extras repos"
+			fi
 		fi
 	fi
-	if dnf repolist | grep -q '^epel'; then
-		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled epel 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-			PRNWARN "Failed to disable epel repository."
-		else
-			PRNINFO "Succeed to disable epel repository."
-		fi
-	fi
-	if dnf repolist | grep -q '^mariadb'; then
+	if dnf repolist 2>/dev/null | grep -q '^mariadb'; then
 		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled mariadb-main 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
 			PRNWARN "Failed to disable mariadb-main repository."
 		else
@@ -1993,6 +2066,27 @@ if [ "${RUN_MODE}" = "start" ]; then
 			PRNWARN "Failed to disable mariadb-tools repository."
 		else
 			PRNINFO "Succeed to disable mariadb-tools repository."
+		fi
+	fi
+	if dnf repolist all 2>/dev/null | grep -q '^epel'; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled epel 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to disable epel repos"
+		else
+			PRNINFO "Succeed to disable epel repos"
+		fi
+	fi
+	if dnf repolist all 2>/dev/null | grep -q '^epel-next'; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled epel-next 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to disable epel-next repos"
+		else
+			PRNINFO "Succeed to disable epel-next repos"
+		fi
+	fi
+	if dnf repolist all 2>/dev/null | grep -q '^epel-testing'; then
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf config-manager --set-disabled epel-testing 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to disable epel-testing repos"
+		else
+			PRNINFO "Succeed to disable epel-testing repos"
 		fi
 	fi
 
@@ -2035,11 +2129,34 @@ if [ "${RUN_MODE}" = "start" ]; then
 	fi
 
 	#
+	# [PRE-PROCESSING] Install bind-utils
+	#
+	PRNMSG "[PRE-PROCESSING] Check and Install bind-utils"
+
+	if ! dnf list installed 2>/dev/null | grep -q 'bind-utils'; then
+		#
+		# Install bind-utils
+		#
+		PRNINFO "Not found bind-utils, so install it."
+
+		#
+		# Install bind-utils
+		#
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y bind-utils" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to install bind-utils package."
+			exit 1
+		fi
+		PRNINFO "Installed bind-utils."
+	else
+		PRNINFO "Already installed bind-utils."
+	fi
+
+	#
 	# [PRE-PROCESSING] Install mariadb
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install mariadb"
 
-	if ! dnf list installed | grep -q 'MariaDB-server'; then
+	if ! dnf list installed 2>/dev/null | grep -q 'MariaDB-server'; then
 		#
 		# Install mariadb
 		#
@@ -2080,7 +2197,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install Apache(httpd)"
 
-	if ! dnf list installed | grep -q '^httpd\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^httpd\.'; then
 		#
 		# Install Apache(httpd)
 		#
@@ -2103,7 +2220,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install iSCSI utils"
 
-	if ! dnf list installed | grep -q '^iscsi-initiator-utils\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^iscsi-initiator-utils\.'; then
 		#
 		# Install iSCSI utils
 		#
@@ -2126,7 +2243,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Install libvirt daemon"
 
-	if ! dnf list installed | grep -q '^libvirt-daemon\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^libvirt-daemon\.'; then
 		#
 		# Install libvirt daemon
 		#
@@ -2162,7 +2279,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install QEMU driver for libvirt daemon"
 
-	if ! dnf list installed | grep -q '^libvirt-daemon-driver-qemu\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^libvirt-daemon-driver-qemu\.'; then
 		#
 		# Install QEMU driver for libvirt daemon
 		#
@@ -2254,7 +2371,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install libvirt for Python 3"
 
-	if ! dnf list installed | grep -q '^python3-libvirt\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^python3-libvirt\.'; then
 		#
 		# Install libvirt for Python 3
 		#
@@ -2277,7 +2394,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install Memcached"
 
-	if ! dnf list installed | grep -q '^memcached\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^memcached\.'; then
 		#
 		# Install Memcached
 		#
@@ -2318,7 +2435,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install HAProxy"
 
-	if ! dnf list installed | grep -q '^haproxy\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^haproxy\.'; then
 		#
 		# Install HAProxy
 		#
@@ -2350,7 +2467,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 		#
 		# Check and Install python3-devel
 		#
-		if ! dnf list installed | grep -q '^python3-devel\.'; then
+		if ! dnf list installed 2>/dev/null | grep -q '^python3-devel\.'; then
 			#
 			# Install python3-devel
 			#
@@ -2378,7 +2495,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install dstat command"
 
-	if ! dnf list installed | grep -q '^pcp-system-tools\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^pcp-system-tools\.'; then
 		#
 		# Install dstat command
 		#
@@ -2405,7 +2522,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Install debootstrap package"
 
-	if ! dnf list installed | grep -q '^debootstrap\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^debootstrap\.'; then
 		#
 		# Install debootstrap packages
 		#
@@ -2430,7 +2547,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	PRNMSG "[PRE-PROCESSING] Install xorriso packages for mkisofs command"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
-		if ! dnf list installed | grep -q '^xorriso\.'; then
+		if ! dnf list installed 2>/dev/null | grep -q '^xorriso\.'; then
 			#
 			# Install xorriso packages
 			#
@@ -2486,7 +2603,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Install liberasurecode-devel and rsync-daemon for Swift and PyECLib"
 
-	if ! dnf list installed | grep -q '^liberasurecode-devel\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^liberasurecode-devel\.'; then
 		#
 		# Install liberasurecode-devel packages
 		#
@@ -2500,7 +2617,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	else
 		PRNINFO "Already installed liberasurecode-devel package."
 	fi
-	if ! dnf list installed | grep -q '^rsync-daemon\.'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^rsync-daemon\.'; then
 		#
 		# Install rsync-daemon packages
 		#
@@ -2520,7 +2637,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Uninstall conflict packages"
 
-	if dnf list installed | grep -q '^python3-requests\.'; then
+	if dnf list installed 2>/dev/null | grep -q '^python3-requests\.'; then
 		#
 		# Found python3-requests package
 		#
@@ -2538,7 +2655,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 		PRNINFO "Already uninstalled python3-requests package."
 	fi
 
-	if dnf list installed | grep -q '^python3-chardet\.'; then
+	if dnf list installed 2>/dev/null | grep -q '^python3-chardet\.'; then
 		#
 		# Found python3-chardet package
 		#
@@ -2554,6 +2671,42 @@ if [ "${RUN_MODE}" = "start" ]; then
 		PRNINFO "Uninstalled python3-chardet package."
 	else
 		PRNINFO "Already uninstalled python3-chardet package."
+	fi
+
+	if dnf list installed 2>/dev/null | grep -q '^python3-jsonschema\.'; then
+		#
+		# Found python3-jsonschema package
+		#
+		PRNINFO "Found python3-jsonschema package, so uninstall it."
+
+		#
+		# Uninstall python3-jsonschema package
+		#
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf remove -y python3-jsonschema" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to uninstall python3-jsonschema package."
+			exit 1
+		fi
+		PRNINFO "Uninstalled python3-jsonschema package."
+	else
+		PRNINFO "Already uninstalled python3-jsonschema package."
+	fi
+
+	if dnf list installed 2>/dev/null | grep -q '^python3-ptyprocess\.'; then
+		#
+		# Found python3-ptyprocess package
+		#
+		PRNINFO "Found python3-ptyprocess package, so uninstall it."
+
+		#
+		# Uninstall python3-ptyprocess package
+		#
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf remove -y python3-ptyprocess" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to uninstall python3-ptyprocess package."
+			exit 1
+		fi
+		PRNINFO "Uninstalled python3-ptyprocess package."
+	else
+		PRNINFO "Already uninstalled python3-ptyprocess package."
 	fi
 
 	#
@@ -2577,6 +2730,67 @@ if [ "${RUN_MODE}" = "start" ]; then
 		PRNINFO "Set SHA1(old) crypto policy."
 	else
 		PRNINFO "Already set SHA1(old) crypto policy."
+	fi
+
+	#
+	# [PRE-PROCESSING] Check and Setup iptables service
+	#
+	# If the firewalld service is running, switch to legacy iptables.
+	#
+	PRNMSG "[PRE-PROCESSING] Check and Setup iptables service"
+	if ! systemctl status iptables >/dev/null 2>&1; then
+		#
+		# Try to install iptables service
+		#
+		PRNINFO "Try to install iptables service"
+
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y iptables-services" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to install iptables service."
+			exit 1
+		fi
+		PRNINFO "Succeed to install iptables service."
+
+		#
+		# Stop firewalld service
+		#
+		PRNINFO "Stop firewalld service"
+
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl stop firewalld" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to stop firewalld service (It may not have been started already)."
+		fi
+		PRNINFO "Succeed to stop firewalld service."
+
+		#
+		# Disable firewalld service
+		#
+		PRNINFO "Disable firewalld service"
+
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl disable firewalld" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNWARN "Failed to disable firewalld service (It may not have been enabled already)."
+		fi
+		PRNINFO "Succeed to disable firewalld service."
+
+		#
+		# Enable iptables service
+		#
+		PRNINFO "Enable iptables service"
+
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl enable iptables" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to enable iptables service."
+			exit 1
+		fi
+		PRNINFO "Succeed to enable iptables service."
+
+		#
+		# Start iptables service
+		#
+		PRNINFO "Start iptables service"
+
+		if ({ /bin/sh -c "${SUDO_PREFIX_CMD} systemctl start iptables" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to start iptables service."
+			exit 1
+		fi
+		PRNINFO "Succeed to start iptables service."
 	fi
 
 	#
@@ -2635,7 +2849,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 	#
 	PRNMSG "[PRE-PROCESSING] Check and Start openvswitch ovs-vswitchd ovsdb-server services"
 
-	if ! dnf list installed | grep -q '^openvswitch'; then
+	if ! dnf list installed 2>/dev/null | grep -q '^openvswitch'; then
 		if ! /bin/sh -c "${SUDO_PREFIX_CMD} dnf install -y openvswitch" >/dev/null 2>&1; then
 			PRNERR "Failed to install openvswitch."
 			exit 1
@@ -3252,12 +3466,26 @@ if [ "${RUN_MODE}" = "start" ]; then
 	# [SETUP] Install k2hr3clinet python
 	#
 	PRNMSG "[SETUP] Install k2hr3clinet python"
+	(
+		if [ -n "${HTTPS_PROXY}" ] && ! echo "${HTTPS_PROXY}" | grep -q '^http.*://'; then
+			HTTPS_PROXY="http://${HTTPS_PROXY}"
+		fi
+		if [ -n "${HTTP_PROXY}" ] && ! echo "${HTTP_PROXY}" | grep -q '^http.*://'; then
+			HTTP_PROXY="http://${HTTP_PROXY}"
+		fi
+		if [ -n "${https_proxy}" ] && ! echo "${https_proxy}" | grep -q '^http.*://'; then
+			https_proxy="http://${https_proxy}"
+		fi
+		if [ -n "${http_proxy}" ] && ! echo "${http_proxy}" | grep -q '^http.*://'; then
+			http_proxy="http://${http_proxy}"
+		fi
 
-	if ({ pip install k2hr3client 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-		PRNERR "Failed to install k2hr3client python"
-		exit 1
-	fi
-	PRNINFO "Succeed to install k2hr3client python package."
+		if ({ pip install k2hr3client 2>&1 || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Failed to install k2hr3client python"
+			exit 1
+		fi
+		PRNINFO "Succeed to install k2hr3client python package."
+	)
 
 	#
 	# [SETUP] Patch SCSS file in Horizon
