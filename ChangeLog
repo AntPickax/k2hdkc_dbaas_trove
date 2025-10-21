@@ -1,3 +1,9 @@
+k2hdkc-dbaas (1.0.7) unstable; urgency=low
+
+  * Enhanced extensibility for scripts and other files - #15
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Tue, 21 Oct 2025 15:55:44 +0900
+
 k2hdkc-dbaas (1.0.6) unstable; urgency=low
 
   * Updated for compatibility with trove stable/2025.1 - #13
